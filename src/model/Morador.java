@@ -15,6 +15,7 @@ public class Morador extends Pessoa {
         System.out.println("Nome: " + getNome());
         System.out.println("CPF: " + getCPF());
         System.out.println("Telefone: " + getTel());
+        System.out.println("Endereço: " + getEnderecoMorador());
     }
 
     public void adicionarVeiculo(Veiculo novoVeiculo){
@@ -23,6 +24,19 @@ public class Morador extends Pessoa {
             System.out.println("Veículo adicionado com sucesso ao morador: " + getNome());
         }else{
             System.out.println("ERRO: Tentativa de adicionar um veículo nulo.");
+        }
+    }
+
+    public void setCredencial(Credencial credencial) {
+        if(credencial != null){
+            if(this.credencial.size() >= 2){
+                System.out.println("ERRO: Morador já possui duas credenciais.");
+            }else{
+                this.credencial.add(credencial);
+                System.out.println("Credencial adicionada com sucesso ao morador: " + getNome());
+            }
+        }else{
+            System.out.println("ERRO: Tentativa de adicionar uma credencial nula.");
         }
     }
 
