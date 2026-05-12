@@ -10,6 +10,14 @@ public class Morador extends Pessoa {
     private String enderecoMorador;
 
 
+    public Morador(int id, String nome, String cpf, String tel, String enderecoMorador) {
+        setID(id);
+        setNome(nome);
+        setCPF(cpf);
+        setTel(tel);
+        this.enderecoMorador = enderecoMorador;
+    }
+
     public void exibirDadosMorador(){
         System.out.println("---Dados do Morador---");
         System.out.println("Nome: " + getNome());

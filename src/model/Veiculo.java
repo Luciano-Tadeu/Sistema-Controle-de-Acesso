@@ -3,6 +3,11 @@ package model;
 public class Veiculo {
     private String placa, modelo, cor;
 
+    public Veiculo(String placa, String modelo, String cor) {
+        this.placa = placa;
+        this.modelo = modelo;
+        this.cor = cor;
+    }
     public String getPlaca(){
         return placa;
     }

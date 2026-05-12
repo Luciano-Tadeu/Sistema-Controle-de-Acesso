@@ -4,6 +4,11 @@ public class Funcionario extends Pessoa {
     private String funcao;
     private Credencial credencial;
 
+    public Funcionario(String funcao, Credencial credencial) {
+        this.funcao = funcao;
+        this.credencial = credencial;
+    }
+
     public String getFuncao() {
         return funcao;
     }

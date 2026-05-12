@@ -1,4 +1,7 @@
 package main;
+import java.util.ResourceBundle.Control;
+
+import model.Controlador;
 import model.Credencial;
 import model.Morador;
 import model.Pessoa;
@@ -6,12 +9,15 @@ import model.Veiculo;
 
 public class App {
     public static void main(String[] args) throws Exception {
-        Morador morador1 = new Morador();
-        morador1.setNome("Marcos");
-        morador1.setCPF("055");
-        morador1.setID(2);
-        morador1.setTel("65");
-        morador1.setEnderecoMorador("Coophamil");
+        Credencial credencial1 = new Credencial();
+        Veiculo veiculo1 = new Veiculo("MVZ5886", "Toyota Etios", "Prata");
+
+        Morador morador1 = new Morador(1, "Marcos", "05518955197", "65981077777", "Rua 29, 19");
+        morador1.setCredencial(credencial1);
+        morador1.adicionarVeiculo(veiculo1);
+
+        Controlador controlador = new Controlador();
+        controlador.adicionarMorador(morador1);
+        System.out.println(controlador.getMoradores());
         morador1.exibirDadosMorador();
-    }
-}
+}}
