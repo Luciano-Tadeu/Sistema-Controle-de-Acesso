@@ -7,6 +7,16 @@ public class Registro {
     private LocalDateTime dataHora;
     private boolean acessoLiberado;
 
+    public Registro(int idReg) {
+        this.idReg = idReg;
+    }
+
+    public void exibirDadosRegistro(){
+        System.out.printf("---Registro %d ---\n", getIdReg());
+        System.out.println("Data: " + getDataHora());
+        System.out.printf("Acesso: %s\n", isAcessoLiberado()? "Liberado" : "Negado");
+    }
+
     public int getIdReg() {
         return idReg;
     }

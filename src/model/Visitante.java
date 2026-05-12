@@ -3,11 +3,26 @@ package model;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class Visitante {
+public class Visitante extends Pessoa{
     private Morador moradorVisitado;
     private LocalDateTime dataVisita;
     
-    
+    public Visitante(int id, String nome, String cpf, String tel, Morador moradorVisitado) {
+        setID(id);
+        setNome(nome);
+        setCPF(cpf);
+        setTel(tel);
+        this.moradorVisitado = moradorVisitado;
+    }
+
+    public void exibirDadosVisitante(){
+        System.out.println("---Dados do Visitante---");
+        System.out.println("Nome: " + getNome());
+        System.out.println("CPF: " + getCPF());
+        System.out.println("Telefone: " + getTel());
+        System.out.println("Morador Visitado: " + moradorVisitado.getNome());
+    }
+
     public Morador getMoradorVisitado() {
         return moradorVisitado;
     }

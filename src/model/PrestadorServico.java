@@ -11,6 +11,27 @@ public class PrestadorServico extends Pessoa{
     private LocalTime horaEntrada;
     private LocalTime horaSaida;
 
+    public PrestadorServico(int id, String nome, String cpf, String tel, String cnh, String tipoServico, String enderecoMoradorP) {
+        setID(id);
+        setNome(nome);
+        setCPF(cpf);
+        setTel(tel);
+        this.cnh = cnh;
+        this.tipoServico = tipoServico;
+        this.enderecoMoradorP = enderecoMoradorP;
+    }
+
+        public void exibirDadosPrestador(){
+        System.out.println("---Dados do Prestador de Serviço---");
+        System.out.println("Nome: " + getNome());
+        System.out.println("CPF: " + getCPF());
+        System.out.println("Telefone: " + getTel());
+        System.out.println("Endereço Morador: " + getEnderecoMoradorP());
+        System.out.println("Serviço: " + getTipoServico());
+        System.out.println("Hora Entrada: " + getHoraEntrada());
+        System.out.println("Hora Saida: " + getHoraSaida());
+    }
+
     public String getCnh() {
         return cnh;
     }

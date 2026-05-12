@@ -4,9 +4,21 @@ public class Funcionario extends Pessoa {
     private String funcao;
     private Credencial credencial;
 
-    public Funcionario(String funcao, Credencial credencial) {
+    public Funcionario(int id, String nome, String cpf, String tel, String funcao, Credencial credencial) {
+        setID(id);
+        setNome(nome);
+        setCPF(cpf);
+        setTel(tel);
         this.funcao = funcao;
         this.credencial = credencial;
+    }
+
+        public void exibirDadosFuncionario(){
+        System.out.println("---Dados do Funcionário---");
+        System.out.println("Nome: " + getNome());
+        System.out.println("CPF: " + getCPF());
+        System.out.println("Telefone: " + getTel());
+        System.out.println("Função: " + getFuncao());
     }
 
     public String getFuncao() {
