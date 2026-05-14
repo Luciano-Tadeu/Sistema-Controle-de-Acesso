@@ -13,6 +13,7 @@ public class Visitante extends Pessoa{
         setCPF(cpf);
         setTel(tel);
         this.moradorVisitado = moradorVisitado;
+        setDataVisita();
     }
 
     public void exibirDadosVisitante(){
