@@ -8,19 +8,15 @@ public class Visitante extends Pessoa{
     private LocalDateTime dataVisita;
     
     public Visitante(int id, String nome, String cpf, String tel, Morador moradorVisitado) {
-        setID(id);
-        setNome(nome);
-        setCPF(cpf);
-        setTel(tel);
+        super(id, nome, cpf, tel);
         this.moradorVisitado = moradorVisitado;
         setDataVisita();
     }
 
-    public void exibirDadosVisitante(){
+    @Override
+    public void exibirDados(){
         System.out.println("---Dados do Visitante---");
-        System.out.println("Nome: " + getNome());
-        System.out.println("CPF: " + getCPF());
-        System.out.println("Telefone: " + getTel());
+        super.exibirDados();
         System.out.println("Morador Visitado: " + moradorVisitado.getNome());
     }
 

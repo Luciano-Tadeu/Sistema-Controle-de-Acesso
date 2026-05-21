@@ -4,14 +4,32 @@ public class Pessoa {
     private int iD;
     private String nome, cpf, telefone;
 
+
+    public Pessoa(int iD, String nome, String cpf, String telefone){
+        boolean isTrue = setID(iD);
+        if(!isTrue) return;
+        this.nome = nome;
+        this.cpf = cpf;
+        this.telefone = telefone;
+    }
+
+    public void exibirDados(){
+        System.out.println("Nome: " + getNome());
+        System.out.println("CPF: " + getCPF());
+        System.out.println("Telefone: " + getTel());
+    }
+
     public int getID(){
         return iD;
     }
-    public void setID(int iD){
+
+    public boolean setID(int iD){
         if(iD > 0){
             this.iD = iD;
+            return true;
         }else{
             System.out.println("ERRO: O ID não pode ser negativo.");
+            return false;
         }
     }
 

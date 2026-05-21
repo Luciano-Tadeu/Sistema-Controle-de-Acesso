@@ -11,18 +11,14 @@ public class Morador extends Pessoa {
 
 
     public Morador(int id, String nome, String cpf, String tel, String enderecoMorador) {
-        setID(id);
-        setNome(nome);
-        setCPF(cpf);
-        setTel(tel);
+        super(id, nome, cpf, tel);
         this.enderecoMorador = enderecoMorador;
     }
 
-    public void exibirDadosMorador(){
+    @Override
+    public void exibirDados(){
         System.out.println("---Dados do Morador---");
-        System.out.println("Nome: " + getNome());
-        System.out.println("CPF: " + getCPF());
-        System.out.println("Telefone: " + getTel());
+        super.exibirDados();
         System.out.println("Endereço: " + getEnderecoMorador());
     }
 
@@ -46,6 +42,10 @@ public class Morador extends Pessoa {
         }else{
             System.out.println("ERRO: Tentativa de adicionar uma credencial nula.");
         }
+    }
+
+    public List<Veiculo> getVeiculo() {
+        return veiculo;
     }
 
     public String getEnderecoMorador() {

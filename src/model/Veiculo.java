@@ -8,6 +8,14 @@ public class Veiculo {
         this.modelo = modelo;
         this.cor = cor;
     }
+
+    public void exibirDadosVeiculo(){
+        System.out.println("---Dados do Veículo---");
+        System.out.println("Placa: " + getPlaca());
+        System.out.println("Modelo: " + getModelo());
+        System.out.println("Cor: " + getCor());
+    }
+
     public String getPlaca(){
         return placa;
     }

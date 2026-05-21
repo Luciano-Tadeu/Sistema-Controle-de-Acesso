@@ -2,34 +2,33 @@ package model;
 
 
 import java.time.LocalTime;
-
+import java.time.format.DateTimeFormatter;
 
 public class PrestadorServico extends Pessoa{
     private String cnh;
     private String tipoServico;
-    private String enderecoMoradorP;
+    private Morador morador;
     private LocalTime horaEntrada;
     private LocalTime horaSaida;
 
-    public PrestadorServico(int id, String nome, String cpf, String tel, String cnh, String tipoServico, String enderecoMoradorP) {
-        setID(id);
-        setNome(nome);
-        setCPF(cpf);
-        setTel(tel);
+    public PrestadorServico(int id, String nome, String cpf, String tel, String cnh, String tipoServico, Morador morador) {
+        super(id, nome, cpf, tel);
         this.cnh = cnh;
         this.tipoServico = tipoServico;
-        this.enderecoMoradorP = enderecoMoradorP;
+        this.morador = morador;
     }
 
-        public void exibirDadosPrestador(){
+    @Override
+    public void exibirDados(){
         System.out.println("---Dados do Prestador de Serviço---");
-        System.out.println("Nome: " + getNome());
-        System.out.println("CPF: " + getCPF());
-        System.out.println("Telefone: " + getTel());
-        System.out.println("Endereço Morador: " + getEnderecoMoradorP());
+        super.exibirDados();
+        System.out.println("Endereço Morador: " + morador.getEnderecoMorador());
         System.out.println("Serviço: " + getTipoServico());
-        System.out.println("Hora Entrada: " + getHoraEntrada());
-        System.out.println("Hora Saida: " + getHoraSaida());
+        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        String dataEntradaBonita = this.getHoraEntrada().format(formatador);
+        System.out.println("Hora Entrada: " + dataEntradaBonita);
+        String dataSaidaBonita = this.getHoraSaida().format(formatador);
+        System.out.println("Hora Saida: " + dataSaidaBonita);
     }
 
     public String getCnh() {
@@ -46,11 +45,11 @@ public class PrestadorServico extends Pessoa{
         this.tipoServico = tipoServico;
     }
 
-    public String getEnderecoMoradorP() {
-        return enderecoMoradorP;
+    public Morador getMorador() {
+        return this.morador;
     }
-    public void setEnderecoMoradorP(String enderecoMoradorP) {
-        this.enderecoMoradorP = enderecoMoradorP;
+    public void setMorador(Morador morador) {
+        this.morador = morador;
     }
 
     public void setHoraEntrada(){
@@ -63,6 +62,6 @@ public class PrestadorServico extends Pessoa{
         return this.horaEntrada;
     }
     public LocalTime getHoraSaida(){
-        return this.horaSaida;
+        return this.horaSaida;  
     }
 }
