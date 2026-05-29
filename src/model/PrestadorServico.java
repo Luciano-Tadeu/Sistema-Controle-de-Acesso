@@ -11,8 +11,8 @@ public class PrestadorServico extends Pessoa{
     private LocalTime horaEntrada;
     private LocalTime horaSaida;
 
-    public PrestadorServico(int id, String nome, String cpf, String tel, String cnh, String tipoServico, Morador morador) {
-        super(id, nome, cpf, tel);
+    public PrestadorServico(String nome, String cpf, String tel, String cnh, String tipoServico, Morador morador) {
+        super(nome, cpf, tel);
         this.cnh = cnh;
         this.tipoServico = tipoServico;
         this.morador = morador;

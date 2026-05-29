@@ -10,8 +10,8 @@ public class Morador extends Pessoa {
     private String enderecoMorador;
 
 
-    public Morador(int id, String nome, String cpf, String tel, String enderecoMorador) {
-        super(id, nome, cpf, tel);
+    public Morador(String nome, String cpf, String tel, String enderecoMorador) {
+        super(nome, cpf, tel);
         this.enderecoMorador = enderecoMorador;
     }
 

@@ -1,12 +1,14 @@
 package model;
 
-public class Pessoa {
+public abstract class Pessoa {
     private int iD;
     private String nome, cpf, telefone;
+    private static int contadorIdGeral = 1;
 
 
-    public Pessoa(int iD, String nome, String cpf, String telefone){
-        boolean isTrue = setID(iD);
+    public Pessoa(String nome, String cpf, String telefone){
+        boolean isTrue = setID(contadorIdGeral);
+        contadorIdGeral++;
         if(!isTrue) return;
         this.nome = nome;
         this.cpf = cpf;

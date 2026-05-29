@@ -7,8 +7,8 @@ public class Visitante extends Pessoa{
     private Morador moradorVisitado;
     private LocalDateTime dataVisita;
     
-    public Visitante(int id, String nome, String cpf, String tel, Morador moradorVisitado) {
-        super(id, nome, cpf, tel);
+    public Visitante(String nome, String cpf, String tel, Morador moradorVisitado) {
+        super(nome, cpf, tel);
         this.moradorVisitado = moradorVisitado;
         setDataVisita();
     }
