@@ -22,6 +22,11 @@ public class Morador extends Pessoa {
         System.out.println("Endereço: " + getEnderecoMorador());
     }
 
+    @Override
+    public String toString() {
+        return "Nome: " + super.getNome() + " | CPF: " + super.getCPF() + " | Telefone: " + super.getTel() + " | Endereço: " + this.getEnderecoMorador();
+    }
+
     public void adicionarVeiculo(Veiculo novoVeiculo){
         if(novoVeiculo != null){
             this.veiculo.add(novoVeiculo);

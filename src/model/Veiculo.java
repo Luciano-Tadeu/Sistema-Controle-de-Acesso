@@ -16,6 +16,11 @@ public class Veiculo {
         System.out.println("Cor: " + getCor());
     }
 
+    @Override
+    public String toString() {
+        return "Placa: " + this.getPlaca() + " | Modelo: " + this.getModelo() + " | Cor: " + this.getCor();
+    }
+
     public String getPlaca(){
         return placa;
     }
