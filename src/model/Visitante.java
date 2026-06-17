@@ -20,6 +20,11 @@ public class Visitante extends Pessoa{
         System.out.println("Morador Visitado: " + moradorVisitado.getNome());
     }
 
+    @Override
+    public String toString() {
+        return "Nome: " + super.getNome() + " | CPF: " + super.getCPF() + " | Telefone: " + super.getTel() + " | Morador (Endereço): " + this.getMoradorVisitado().getEnderecoMorador();
+    }
+
     public Morador getMoradorVisitado() {
         return moradorVisitado;
     }

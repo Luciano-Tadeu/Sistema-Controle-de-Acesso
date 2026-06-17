@@ -16,6 +16,11 @@ public class Funcionario extends Pessoa {
         System.out.println("Função: " + getFuncao());
     }
 
+    @Override
+    public String toString() {
+        return "Nome: " + super.getNome() + " | CPF: " + super.getCPF() + " | Telefone: " + super.getTel() + " | Função: " + this.getFuncao();
+    }
+
     public String getFuncao() {
         return funcao;
     }

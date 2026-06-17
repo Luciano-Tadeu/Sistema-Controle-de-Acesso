@@ -29,14 +29,14 @@ public class App {
 
         while (executando) {
             String menu = "=== MÓDULO DE ACESSO - PORTARIA ===\n\n" +
-                          "1 - Adicionar Morador e Veículo\n" +
-                          "2 - Listar Moradores e Veículos\n\n" +
-                          "3 - Adicionar Visitante\n" +
-                          "4 - Listar Visitantes\n\n" +
-                          "5 - Adicionar Funcionário\n" +
+                          "1 - Cadastrar Novo Morador\n" +
+                          "2 - Listar Moradores\n\n" +
+                          "3 - Cadastrar Visita\n" +
+                          "4 - Listar Visitas\n\n" +
+                          "5 - Cadastrar Funcionário\n" +
                           "6 - Listar Funcionários\n\n" +
-                          "7 - Adicionar Prestador de Serviço\n" +
-                          "8 - Listar Prestadores de Serviço\n\n" +
+                          "7 - Cadastrar Prestador de Serviço\n" +
+                          "8 - Listar Serviços\n\n" +
                           "9 - Ver Registros de Acesso\n" +
                           "0 - Sair do Sistema\n\n" +
                           "Escolha uma opção:";
@@ -51,6 +51,9 @@ public class App {
 
             switch (opcao) {
                 case "1":
+                    // =========================
+                    // TELA CADASTRO MORADOR
+                    // =========================
                     TelaCadastro telaCadastroMorador = new TelaCadastro(controlador);
                     telaCadastroMorador.cadastroMorador();
                     break;
@@ -72,6 +75,9 @@ public class App {
                     break;
 
                 case "3":
+                    // =========================
+                    // TELA CADASTRO VISITANTE
+                    // =========================
                     TelaCadastro telaCadastroVisitante = new TelaCadastro(controlador);
                     telaCadastroVisitante.cadastroVisitante();
                     break;
@@ -85,6 +91,11 @@ public class App {
                     break;
 
                 case "5":
+                    // =========================
+                    // TELA CADASTRO FUNCIONÁRIO
+                    // =========================
+                    TelaCadastro telaCadastroFuncionario = new TelaCadastro(controlador);
+                    telaCadastroFuncionario.cadastroFuncionario();
                     break;
 
                 case "6":
@@ -97,9 +108,12 @@ public class App {
                     break;
 
                 case "7":
-                    
+                    // =========================
+                    // TELA CADASTRO PRESTADOR
+                    // =========================
+                    TelaCadastro telaCadastroPrestador = new TelaCadastro(controlador);
+                    telaCadastroPrestador.cadastroPrestador();
                     break;
-
                 case "8":
                     // LISTAR PRESTADORES NA JANELA
                     String relatorioPrestadores = "=== PRESTADORES NO SISTEMA ===\n\n";

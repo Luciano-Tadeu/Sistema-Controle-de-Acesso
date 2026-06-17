@@ -180,7 +180,7 @@ public class TelaCadastro {
 
         // Loop para garantir que o usuário preencha os dados corretamente
         while (!cadastroValido) {
-            int opM = JOptionPane.showConfirmDialog(null, campos, "Cadastro Morador", JOptionPane.OK_CANCEL_OPTION);
+            int opM = JOptionPane.showConfirmDialog(null, campos, "Cadastro Visita", JOptionPane.OK_CANCEL_OPTION);
 
             if (opM != JOptionPane.OK_OPTION) {
                 break; 
@@ -235,11 +235,150 @@ public class TelaCadastro {
     }
 
     public void cadastroFuncionario(){
-        
+        // =========================
+        // TELA CADASTRO FUNCIONARIO
+        // =========================
+        JTextField campoNome = new JTextField();
+        JTextField campoCPF = new JTextField();
+        JTextField campoTelefone = new JTextField();
+        JTextField campoFuncao = new JTextField();
+
+        Object[] campos = {
+            "Nome:", campoNome,
+            "CPF (somente números):", campoCPF,
+            "Telefone (somente números):", campoTelefone,
+            "Função:", campoFuncao,
+        };
+
+        boolean cadastroValido = false;
+
+        // Loop para garantir que o usuário preencha os dados corretamente
+        while (!cadastroValido) {
+            int opM = JOptionPane.showConfirmDialog(null, campos, "Cadastro Funcionário", JOptionPane.OK_CANCEL_OPTION);
+
+            if (opM != JOptionPane.OK_OPTION) {
+                break; 
+            }
+
+            String nome = campoNome.getText().trim();
+            String CPF = campoCPF.getText().trim();
+            String telefone = campoTelefone.getText().trim();
+            String funcao = campoFuncao.getText().trim();
+
+            // 1. Validação com IF: Impedir campos vazios
+            if (nome.isEmpty() || CPF.isEmpty() || telefone.isEmpty() || funcao.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Todos os campos são obrigatórios. Por favor, preencha tudo!", "Erro de Validação", JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
+
+            // 2. Validação com TRY-CATCH: Garantir que CPF e Telefone sejam apenas números
+            try {
+                Long.parseLong(CPF);
+                Long.parseLong(telefone);
+                
+                int confirmar = JOptionPane.showConfirmDialog(null,
+                    "Nome: " + nome + 
+                    "\nCPF: " + CPF + 
+                    "\nTelefone: " + telefone + 
+                    "\nFunção: " + funcao,
+                    "CONFIRMAR DADOS?",
+                    JOptionPane.YES_NO_OPTION
+                );
+
+                if (confirmar == JOptionPane.YES_OPTION) {
+                    Funcionario novFuncionario = new Funcionario(nome, CPF, telefone, funcao);
+                    controlador.adicionarFuncionario(novFuncionario);
+                    cadastroValido = true;
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "CPF e Telefone devem conter APENAS números (sem traços ou espaços)!", "Erro de Formatação", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     public void cadastroPrestador(){
-        
+        // =========================
+        // TELA CADASTRO PRESTADOR
+        // =========================
+        JTextField campoNome = new JTextField();
+        JTextField campoCPF = new JTextField();
+        JTextField campoTelefone = new JTextField();
+        JTextField campoCNH = new JTextField();
+        JTextField campoTipoServico = new JTextField();
+        JTextField campoMorador = new JTextField();
+
+        Morador moradorVisitado = null; 
+
+        Object[] campos = {
+            "Nome:", campoNome,
+            "CPF (somente números):", campoCPF,
+            "Telefone (somente números):", campoTelefone,
+            "CNH (Somente números):", campoCNH,
+            "Tipo de Serviço:", campoTipoServico,
+            "Morador (Endereço):", campoMorador,
+        };
+
+        boolean cadastroValido = false;
+
+        // Loop para garantir que o usuário preencha os dados corretamente
+        while (!cadastroValido) {
+            int opM = JOptionPane.showConfirmDialog(null, campos, "Cadastro Prestador de Serviço", JOptionPane.OK_CANCEL_OPTION);
+
+            if (opM != JOptionPane.OK_OPTION) {
+                break; 
+            }
+
+            String nome = campoNome.getText().trim();
+            String CPF = campoCPF.getText().trim();
+            String telefone = campoTelefone.getText().trim();
+            String CNH = campoCNH.getText().trim();
+            String tipoServico = campoTipoServico.getText().trim();
+            String morador = campoMorador.getText().trim();
+
+            // 1. Validação com IF: Impedir campos vazios
+            if (nome.isEmpty() || CPF.isEmpty() || telefone.isEmpty() || morador.isEmpty() || CNH.isEmpty() || tipoServico.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Todos os campos são obrigatórios. Por favor, preencha tudo!", "Erro de Validação", JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
+
+            // 2. Validação com TRY-CATCH: Garantir que CPF, Telefone e CNH sejam apenas números
+            try {
+                Long.parseLong(CPF);
+                Long.parseLong(telefone);
+                Long.parseLong(CNH);
+                
+                int confirmar = JOptionPane.showConfirmDialog(null,
+                    "Nome: " + nome + 
+                    "\nCPF: " + CPF + 
+                    "\nTelefone: " + telefone + 
+                    "\nCNH: " + CNH + 
+                    "\nTipo de Serviço: " + tipoServico + 
+                    "\nMorador (Endereço): " + morador,
+                    "CONFIRMAR DADOS?",
+                    JOptionPane.YES_NO_OPTION
+                );
+
+                if (confirmar == JOptionPane.YES_OPTION) {
+                    for(Morador m : controlador.getMoradores()){
+                        if(m.getEnderecoMorador().equalsIgnoreCase(morador)){
+                            moradorVisitado = m;
+                            break;
+                        }
+                    }
+                    // 3. Verificar se existe o morador no sistema
+                    if(moradorVisitado != null){
+                        PrestadorServico novoPrestadorServico = new PrestadorServico(nome, CPF, telefone, CNH, tipoServico, moradorVisitado);
+                        controlador.adicionarPrestador(novoPrestadorServico);
+                        cadastroValido = true;
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(null, "Endereço do morador não existe ou não foi encontrado!", "Erro Endereço Não Existe", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "CPF e Telefone devem conter APENAS números (sem traços ou espaços)!", "Erro de Formatação", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
 }

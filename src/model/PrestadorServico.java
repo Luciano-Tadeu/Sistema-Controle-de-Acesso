@@ -31,6 +31,11 @@ public class PrestadorServico extends Pessoa{
         System.out.println("Hora Saida: " + dataSaidaBonita);
     }
 
+    @Override
+    public String toString() {
+        return "Nome: " + super.getNome() + " | CPF: " + super.getCPF() + " | Telefone: " + super.getTel() + " | CNH: " + this.getCnh() + " | Tipo de Serviço: " + this.getTipoServico() + " | Morador (Endereço): " + this.getMorador().getEnderecoMorador();
+    }
+
     public String getCnh() {
         return cnh;
     }
