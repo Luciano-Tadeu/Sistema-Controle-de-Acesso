@@ -1,15 +1,13 @@
 package main;
-import java.rmi.registry.Registry;
-import java.util.ResourceBundle.Control;
 import javax.swing.*;
 
 import model.Controlador;
 import model.Credencial;
 import model.Funcionario;
 import model.Morador;
-import model.Pessoa;
 import model.PrestadorServico;
 import model.Registro;
+import model.TelaCadastro;
 import model.Veiculo;
 import model.Visitante;
 
@@ -53,105 +51,9 @@ public class App {
 
             switch (opcao) {
                 case "1":
-                    // =========================
-                    // TELA CADASTRO MORADOR
-                    // =========================
-                    JTextField campoNome = new JTextField();
-                    JTextField campoCPF = new JTextField();
-                    JTextField campoTelefone = new JTextField();
-                    JTextField campoEndereco = new JTextField();
-                    int idTemp = 0;
-
-                    Object[] campos = {
-                        "Nome:", campoNome,
-                        "CPF:", campoCPF,
-                        "Telefone:", campoTelefone,
-                        "Endereço:", campoEndereco,
-                    };
-
-                    int opM = JOptionPane.showConfirmDialog(
-                        null,
-                        campos,
-                        "Cadastro Morador",
-                        JOptionPane.OK_CANCEL_OPTION
-                    );
-
-                    if(opM == JOptionPane.OK_OPTION){
-                        String nome = campoNome.getText();
-                        String CPF = campoCPF.getText();
-                        String telefone = campoTelefone.getText();
-                        String endereco = campoEndereco.getText();
-
-                        int confirmar = JOptionPane.showConfirmDialog(
-                        null,
-                        "Nome: " + nome +
-                        "\nCPF: " + CPF +
-                        "\nTelefone: " + telefone +
-                        "\nEndereço: " + endereco,
-                        "CONFIRMAR?",
-                        JOptionPane.YES_NO_OPTION
-                        );
-
-                        if(confirmar == JOptionPane.YES_OPTION){
-                            Morador novoMorador = new Morador(nome, CPF, telefone, endereco);
-                            novoMorador.setCredencial(new Credencial());
-                            idTemp = novoMorador.getID();
-                            controlador.adicionarMorador(novoMorador);
-                        }
-                    }
-
-                    int veiculo = JOptionPane.showConfirmDialog(
-                        null,
-                        "Possui Veículo?",
-                        "Cadastro Morador",
-                        JOptionPane.YES_NO_OPTION
-                    );
-
-                    if(veiculo == JOptionPane.YES_OPTION){
-                        JTextField campoPlaca = new JTextField();
-                        JTextField campoModelo = new JTextField();
-                        JTextField campoCor = new JTextField();
-
-                        Object[] camposVeiculo = {
-                            "Placa:", campoPlaca,
-                            "Modelo:", campoModelo,
-                            "Cor:", campoCor,
-                        };
-
-                        int op = JOptionPane.showConfirmDialog(
-                            null, 
-                            camposVeiculo, 
-                            "Cadastro Morador", 
-                            JOptionPane.OK_CANCEL_OPTION
-                        );
-
-                        if(op == JOptionPane.OK_OPTION){
-                            String placa = campoPlaca.getText();
-                            String modelo = campoModelo.getText();
-                            String cor = campoCor.getText();
-
-                            int confirmar = JOptionPane.showConfirmDialog(
-                            null,
-                            "Placa: " + placa +
-                            "\nModelo: " + modelo +
-                            "\nCor: " + cor,
-                            "CONFIRMAR?",
-                            JOptionPane.YES_NO_OPTION
-                            );
-
-                            if(confirmar == JOptionPane.YES_OPTION){
-                                for(Morador m:controlador.getMoradores()){
-                                    if(m.getID() == idTemp){
-                                        Veiculo novoVeiculo = new Veiculo(placa, modelo, cor);
-                                        m.adicionarVeiculo(novoVeiculo);
-                                    }
-                                }
-                                
-                            }
-                        }
-                    }
+                    TelaCadastro telaCadastroMorador = new TelaCadastro(controlador);
+                    telaCadastroMorador.cadastroMorador();
                     break;
-
                 case "2":
                     // LISTAR MORADORES NA JANELA
                     String relatorioMoradores = "=== MORADORES NO SISTEMA ===\n\n";
@@ -170,8 +72,9 @@ public class App {
                     break;
 
                 case "3":
+                    TelaCadastro telaCadastroVisitante = new TelaCadastro(controlador);
+                    telaCadastroVisitante.cadastroVisitante();
                     break;
-
                 case "4":
                     // LISTAR VISITANTES NA JANELA
                     String relatorioVisitantes = "=== VISITANTES NO SISTEMA ===\n\n";
