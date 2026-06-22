@@ -207,6 +207,8 @@ public class TelaCadastro {
                         Visitante novoVisitante = new Visitante(nome, CPF, telefone, moradorVisitado);
                         controlador.adicionarVisitante(novoVisitante);
                         cadastroValido = true;
+                        GerenciadorBancoDeDados banco = new GerenciadorBancoDeDados();
+                        banco.salvarVisita(novoVisitante);
                         exibirMensagemEscura("Visitante cadastrado com sucesso!", "Sucesso", false);
                     }
                     else{
