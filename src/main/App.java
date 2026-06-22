@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import model.Controlador;
 import model.Funcionario;
+import model.GerenciadorBancoDeDados;
 import model.Morador;
 import model.PrestadorServico;
 import model.Registro;
@@ -15,8 +16,12 @@ public class App {
 
     // Instanciação do Controlador como atributo estático para os botões acessarem
     private static Controlador controlador = new Controlador();
+    private static GerenciadorBancoDeDados banco = new GerenciadorBancoDeDados();
 
     public static void main(String[] args) {
+
+        banco.carregarDadosIniciais(controlador);
+
 
         // 1. Criação da Janela Principal (Moldura)
         JFrame janela = new JFrame("Portaria Condomínio - Módulo de Acesso");

@@ -143,6 +143,10 @@ public class TelaCadastro {
                     }
                 }
             }
+
+            GerenciadorBancoDeDados banco = new GerenciadorBancoDeDados();
+            banco.salvarMoradorComVeiculos(novoMorador);
+
         }
     }
 
