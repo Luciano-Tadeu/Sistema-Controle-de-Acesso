@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Rodar Sistema Portaria",
+            "request": "launch",
+            "mainClass": "main.App",
+            "vmArgs": "--module-path \"C:/java/javafx-sdk-26.0.1/lib\" --add-modules javafx.controls,javafx.fxml"
+        }
+    ]
+}

@@ -7,111 +7,168 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import javax.print.DocFlavor.STRING;
+
 public class GerenciadorBancoDeDados {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/condominio";
-    private static final String USER = "root";
-    private static final String PASS = "condominio123"; // Coloque sua senha real
-
     private Connection conectar() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASS);
+        java.util.Properties props = new java.util.Properties();
+        
+        try (java.io.FileInputStream entrada = new java.io.FileInputStream("db.properties")) {
+            props.load(entrada);
+        } catch (java.io.IOException e) {
+            System.out.println("Erro: Arquivo db.properties não encontrado na raiz do projeto!");
+            throw new SQLException("Falha ao carregar credenciais do banco.");
+        }
+
+        // Puxa as informações do arquivo
+        String host = props.getProperty("DB_HOST");
+        String porta = props.getProperty("DB_PORT");
+        String bancoDeDados = props.getProperty("DB_NAME");
+        String user = props.getProperty("DB_USER");
+        String password = props.getProperty("DB_PASS");
+
+        // Monta a URL exigindo o SSL para a nuvem
+        String url = "jdbc:mysql://" + host + ":" + porta + "/" + bancoDeDados + "?sslMode=REQUIRED";
+
+        return DriverManager.getConnection(url, user, password);
     }
 
-
-    
     // ==========================================
     // CARREGAR TUDO QUANDO O SISTEMA INICIA
     // ==========================================
     public void carregarDadosIniciais(Controlador controlador) {
-    
-    // ==========================================
-    // 1. CARREGAR MORADORES E SEUS VEÍCULOS
-    // ==========================================
-    String sqlMoradores = "SELECT * FROM moradores";
-    String sqlVeiculos = "SELECT * FROM veiculos WHERE morador_id = ?";
+        
+        // 1. Definição de todas as Queries SQL no início para organização
+        String sqlMoradores = "SELECT * FROM moradores";
+        String sqlVeiculos = "SELECT * FROM veiculos WHERE morador_id = ?";
+        String sqlVisitantes = "SELECT v.*, m.cpf AS cpf_morador FROM visitantes v " +
+                               "JOIN moradores m ON v.morador_id = m.id";
+        String sqlFuncionarios = "SELECT * FROM funcionarios";
+        String sqlPrestadores = "SELECT p.*, m.cpf AS cpf_morador FROM prestadores p " +
+                                "JOIN moradores m ON p.morador_id = m.id";
 
-    try (Connection conn = conectar(); 
-         PreparedStatement stmtM = conn.prepareStatement(sqlMoradores);
-         ResultSet rsMoradores = stmtM.executeQuery()) {
+        // 2. A MÁGICA ACONTECE AQUI: Uma única conexão aberta para todo o método
+        try (Connection conn = conectar()) {
 
-        while (rsMoradores.next()) {
-            int idBanco = rsMoradores.getInt("id"); 
-            
-            Morador m = new Morador(
-                rsMoradores.getString("nome"), 
-                rsMoradores.getString("cpf"), 
-                rsMoradores.getString("telefone"), 
-                rsMoradores.getString("endereco")
-            );
-            m.setCredencial(new Credencial());
+            // ==========================================
+            // PARTE A: CARREGAR MORADORES E SEUS VEÍCULOS
+            // ==========================================
+            try (PreparedStatement stmtM = conn.prepareStatement(sqlMoradores);
+                 ResultSet rsMoradores = stmtM.executeQuery()) {
 
-            // Busca os veículos associados a este morador específico
-            try (PreparedStatement stmtVei = conn.prepareStatement(sqlVeiculos)) {
-                stmtVei.setInt(1, idBanco); // CORRIGIDO: Usando a variável correta e índice 1
-                try (ResultSet rsVeiculos = stmtVei.executeQuery()) { // CORRIGIDO: Executando o stmt dos veículos
-                    while (rsVeiculos.next()) {
-                        Veiculo v = new Veiculo(
-                            rsVeiculos.getString("placa"), 
-                            rsVeiculos.getString("modelo"), 
-                            rsVeiculos.getString("cor")
-                        );
-                        m.adicionarVeiculo(v);
+                while (rsMoradores.next()) {
+                    int idBanco = rsMoradores.getInt("id"); 
+                    
+                    Morador m = new Morador(
+                        rsMoradores.getString("nome"), 
+                        rsMoradores.getString("cpf"), 
+                        rsMoradores.getString("telefone"), 
+                        rsMoradores.getString("endereco")
+                    );
+                    m.setCredencial(new Credencial());
+
+                    // Busca os veículos associados a este morador usando a MESMA conexão 'conn'
+                    try (PreparedStatement stmtVei = conn.prepareStatement(sqlVeiculos)) {
+                        stmtVei.setInt(1, idBanco);
+                        try (ResultSet rsVeiculos = stmtVei.executeQuery()) {
+                            while (rsVeiculos.next()) {
+                                Veiculo v = new Veiculo(
+                                    rsVeiculos.getString("placa"), 
+                                    rsVeiculos.getString("modelo"), 
+                                    rsVeiculos.getString("cor")
+                                );
+                                m.adicionarVeiculo(v);
+                            }
+                        }
                     }
+                    controlador.adicionarMorador(m);
                 }
-            }
-            // Adiciona o morador completo (com carros) na memória
-            controlador.adicionarMorador(m);
-        }
-        System.out.println("Moradores e Veículos carregados com sucesso!");
-
-    } catch (SQLException e) {
-        System.out.println("Erro ao carregar moradores/veículos: " + e.getMessage());
-    }
-
-    // ==========================================
-    // 2. CARREGAR VISITANTES (Com JOIN inteligente)
-    // ==========================================
-    // Trazemos todos os visitantes e injetamos o CPF do respectivo morador na mesma tabela temporária
-    String sqlVisitantes = "SELECT v.*, m.cpf AS cpf_morador FROM visitantes v " +
-                           "JOIN moradores m ON v.morador_id = m.id";
-
-    try (Connection conn = conectar();
-         PreparedStatement stmtVis = conn.prepareStatement(sqlVisitantes);
-         ResultSet rsVisitantes = stmtVis.executeQuery()) {
-
-        while (rsVisitantes.next()) {
-            String cpfMoradorAlvo = rsVisitantes.getString("cpf_morador");
-            Morador moradorVisitado = null;
-
-            // Busca o objeto morador correspondente que já está na memória do controlador
-            for (Morador m : controlador.getMoradores()) {
-                if (m.getCPF().equals(cpfMoradorAlvo)) {
-                    moradorVisitado = m;
-                    break;
-                }
+                System.out.println("Moradores e Veículos carregados com sucesso!");
             }
 
-            // Instancia o visitante vinculando o morador encontrado
-            Visitante v = new Visitante(
-                rsVisitantes.getString("nome"),
-                rsVisitantes.getString("cpf"),
-                rsVisitantes.getString("telefone"),
-                moradorVisitado
-            );
+            // ==========================================
+            // PARTE B: CARREGAR VISITANTES (Com JOIN)
+            // ==========================================
+            try (PreparedStatement stmtVis = conn.prepareStatement(sqlVisitantes);
+                 ResultSet rsVisitantes = stmtVis.executeQuery()) {
 
-            controlador.adicionarVisitante(v);
+                while (rsVisitantes.next()) {
+                    String cpfMoradorAlvo = rsVisitantes.getString("cpf_morador");
+                    Morador moradorVisitado = null;
+
+                    for (Morador m : controlador.getMoradores()) {
+                        if (m.getCPF().equals(cpfMoradorAlvo)) {
+                            moradorVisitado = m;
+                            break;
+                        }
+                    }
+
+                    Visitante v = new Visitante(
+                        rsVisitantes.getString("nome"),
+                        rsVisitantes.getString("cpf"),
+                        rsVisitantes.getString("telefone"),
+                        moradorVisitado
+                    );
+                    controlador.adicionarVisitante(v);
+                }
+                System.out.println("Visitantes carregados com sucesso!");
+            }
+
+            // ==========================================
+            // PARTE C: CARREGAR FUNCIONÁRIOS
+            // ==========================================
+            try (PreparedStatement stmtFun = conn.prepareStatement(sqlFuncionarios);
+                 ResultSet rsFuncionarios = stmtFun.executeQuery()) {
+                
+                while (rsFuncionarios.next()) {
+                    // Nota: se a sua coluna no banco se chamar 'cargo', mude aqui de "funcao" para "cargo"
+                    Funcionario f = new Funcionario(
+                        rsFuncionarios.getString("nome"),
+                        rsFuncionarios.getString("cpf"),
+                        rsFuncionarios.getString("telefone"),
+                        rsFuncionarios.getString("funcao") 
+                    );
+                    controlador.adicionarFuncionario(f);
+                }
+                System.out.println("Funcionários carregados com sucesso!");
+            }
+
+            // ==========================================
+            // PARTE D: CARREGAR PRESTADORES (Com JOIN)
+            // ==========================================
+            try (PreparedStatement stmtPre = conn.prepareStatement(sqlPrestadores);
+                 ResultSet rsPrestadores = stmtPre.executeQuery()) {
+                
+                while (rsPrestadores.next()) {
+                    String cpfMoradorAlvo = rsPrestadores.getString("cpf_morador");
+                    Morador moradorDestino = null;
+
+                    for (Morador m : controlador.getMoradores()) {
+                        if (m.getCPF().equals(cpfMoradorAlvo)) {
+                            moradorDestino = m;
+                            break;
+                        }
+                    }
+
+                    PrestadorServico p = new PrestadorServico(
+                        rsPrestadores.getString("nome"),
+                        rsPrestadores.getString("cpf"),
+                        rsPrestadores.getString("telefone"),
+                        rsPrestadores.getString("cnh"),
+                        rsPrestadores.getString("tiposervico"),
+                        moradorDestino
+                    );
+                    controlador.adicionarPrestador(p);
+                }
+                System.out.println("Prestadores carregados com sucesso!");
+            }
+
+        } catch (SQLException e) {
+            // Qualquer erro de banco em qualquer uma das partes vai cair centralizado aqui
+            System.out.println("Erro crítico ao carregar dados iniciais da nuvem: " + e.getMessage());
         }
-        System.out.println("Visitantes carregados com sucesso!");
-
-    } catch (SQLException e) {
-        System.out.println("Erro ao carregar visitantes: " + e.getMessage());
     }
-
-    // ==========================================
-    // 3. CARREGAR FUNCIONÁRIOS E PRESTADORES
-    // ==========================================
-    // Siga a mesma lógica sequencial acima para ler as tabelas de funcionários e prestadores futuramente!
-}
 
 
     // ==========================================
@@ -203,5 +260,53 @@ public class GerenciadorBancoDeDados {
         } catch (SQLException e) {
             System.out.println("Erro ao salvar visita no banco: " + e.getMessage());
         }
+    }
+
+    public void salvarFuncionario(Funcionario funcionario){
+        String sqlFuncionario = "INSERT INTO funcionarios (nome, cpf, telefone, funcao) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = conectar(); 
+             PreparedStatement stmt = conn.prepareStatement(sqlFuncionario)) {
+                stmt.setString(1, funcionario.getNome());
+                stmt.setString(2, funcionario.getCPF());
+                stmt.setString(3, funcionario.getTel());
+                stmt.setString(4, funcionario.getFuncao());
+                stmt.executeUpdate();
+                System.out.println("Funcionário salvo no MySQL com sucesso");
+        } catch (SQLException e) {
+            System.out.println("Erro ao salvar visita no banco: " + e.getMessage());
+        }
+    }
+
+    public void salvarPrestador(PrestadorServico prestador){
+        String sqlPrestador = "INSERT INTO prestadores (nome, cpf, telefone, cnh, tiposervico, morador_id) VALUES (?, ?, ?, ?, ?, ?)";
+        String sqlBuscaMorador = "SELECT id FROM moradores WHERE cpf = ?";
+        int morador_id = -1;
+
+        try(Connection conn = conectar();
+            PreparedStatement stmt = conn.prepareStatement(sqlBuscaMorador)) {
+                stmt.setString(1, prestador.getMorador().getCPF());
+                try(ResultSet rs = stmt.executeQuery()){
+                    if(rs.next()){
+                        morador_id = rs.getInt("id");
+                    }
+                }
+        } catch (Exception e) {
+            System.out.println("Erro ao carregar prestadores: " + e.getMessage());
+        }
+
+        try (Connection conn = conectar();
+            PreparedStatement stmt = conn.prepareStatement(sqlPrestador)){
+                stmt.setString(1, prestador.getNome());
+                stmt.setString(2, prestador.getCPF());
+                stmt.setString(3, prestador.getTel());
+                stmt.setString(4, prestador.getCnh());
+                stmt.setString(5, prestador.getTipoServico());
+                stmt.setInt(6, morador_id);
+                stmt.executeUpdate();
+        } catch (Exception e) {
+            System.out.println("Erro ao carregar prestadores: " + e.getMessage());
+        }
+
     }
 }

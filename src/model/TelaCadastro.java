@@ -268,6 +268,8 @@ public class TelaCadastro {
                 if (confirmar == JOptionPane.YES_OPTION) {
                     Funcionario novFuncionario = new Funcionario(nome, CPF, telefone, funcao);
                     controlador.adicionarFuncionario(novFuncionario);
+                    GerenciadorBancoDeDados banco = new GerenciadorBancoDeDados();
+                    banco.salvarFuncionario(novFuncionario);
                     cadastroValido = true;
                     exibirMensagemEscura("Funcionário cadastrado com sucesso!", "Sucesso", false);
                 }
@@ -342,6 +344,8 @@ public class TelaCadastro {
                     if(moradorVisitado != null){
                         PrestadorServico novoPrestadorServico = new PrestadorServico(nome, CPF, telefone, CNH, tipoServico, moradorVisitado);
                         controlador.adicionarPrestador(novoPrestadorServico);
+                        GerenciadorBancoDeDados banco = new GerenciadorBancoDeDados();
+                        banco.salvarPrestador(novoPrestadorServico);
                         cadastroValido = true;
                         exibirMensagemEscura("Prestador de serviço cadastrado!", "Sucesso", false);
                     }
