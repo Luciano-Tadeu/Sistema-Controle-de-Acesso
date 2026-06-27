@@ -1,34 +1,21 @@
 package model;
 
 
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class PrestadorServico extends Pessoa{
     private String cnh;
     private String tipoServico;
     private Morador morador;
-    private LocalTime horaEntrada;
-    private LocalTime horaSaida;
+    private LocalDateTime horaEntrada;
+    private LocalDateTime horaSaida;
 
     public PrestadorServico(String nome, String cpf, String tel, String cnh, String tipoServico, Morador morador) {
         super(nome, cpf, tel);
         this.cnh = cnh;
         this.tipoServico = tipoServico;
         this.morador = morador;
-    }
-
-    @Override
-    public void exibirDados(){
-        System.out.println("---Dados do Prestador de Serviço---");
-        super.exibirDados();
-        System.out.println("Endereço Morador: " + morador.getEnderecoMorador());
-        System.out.println("Serviço: " + getTipoServico());
-        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-        String dataEntradaBonita = this.getHoraEntrada().format(formatador);
-        System.out.println("Hora Entrada: " + dataEntradaBonita);
-        String dataSaidaBonita = this.getHoraSaida().format(formatador);
-        System.out.println("Hora Saida: " + dataSaidaBonita);
     }
 
     @Override
@@ -57,16 +44,25 @@ public class PrestadorServico extends Pessoa{
         this.morador = morador;
     }
 
-    public void setHoraEntrada(){
-        this.horaEntrada = LocalTime.now();
+    public void setHoraEntrada(LocalDateTime d){
+        this.horaEntrada = d;
     }
-    public void setHoraSaida(){
-        this.horaSaida = LocalTime.now();
+    public void setHoraSaida(LocalDateTime d){
+        this.horaSaida = d;
     }
-    public LocalTime getHoraEntrada(){
+    public LocalDateTime getHoraEntrada(){
         return this.horaEntrada;
     }
-    public LocalTime getHoraSaida(){
+    public LocalDateTime getHoraSaida(){
         return this.horaSaida;  
+    }
+
+    public String getHoraFormatada(){
+        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm:ss / ");
+        String data =  this.getHoraEntrada() == null? "- / " : this.getHoraEntrada().format(formatador);
+        formatador = DateTimeFormatter.ofPattern("HH:mm:ss");
+        data += this.getHoraSaida() == null? "-" : this.getHoraSaida().format(formatador);
+
+        return data;
     }
 }

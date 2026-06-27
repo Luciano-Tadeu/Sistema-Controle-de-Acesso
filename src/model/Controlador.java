@@ -1,5 +1,6 @@
 package model;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,23 +58,6 @@ public class Controlador {
 
     public List<Registro> getRegistros() {
         return registros;
-    }
-
-    public boolean liberarPrestador(PrestadorServico p, Registro r){
-        if(p.getHoraEntrada() == null){
-            p.setHoraEntrada();
-            r.setDataHora();
-            r.setAcessoLiberado(true);
-            return true;
-        }else if(p.getHoraSaida() == null){
-            p.setHoraSaida();
-            r.setDataHora();
-            r.setAcessoLiberado(true);
-            return true;
-        }
-            r.setDataHora();
-            r.setAcessoLiberado(false);
-        return false;
     }
 
     public boolean verificarAcesso(Credencial credencial) {

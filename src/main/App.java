@@ -24,10 +24,10 @@ public class App extends Application {
 
     private static Controlador controlador = new Controlador();
     private static GerenciadorBancoDeDados banco = new GerenciadorBancoDeDados();
-    private static TelaMorador telaMorador = new TelaMorador();
-    private static TelaFuncionarios telaFuncionario = new TelaFuncionarios();
-    private static TelaVisitas telaVisita = new TelaVisitas();
-    private static TelaServicos telaServico = new TelaServicos();
+    private static TelaMorador telaMorador = new TelaMorador(controlador, banco);
+    private static TelaFuncionarios telaFuncionario = new TelaFuncionarios(controlador, banco);
+    private static TelaVisitas telaVisita = new TelaVisitas(controlador, banco);
+    private static TelaServicos telaServico = new TelaServicos(controlador, banco);
 
     private StackPane cartaoBrancoConteudo;
     

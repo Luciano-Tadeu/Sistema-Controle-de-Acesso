@@ -10,7 +10,7 @@ public class Visitante extends Pessoa{
     public Visitante(String nome, String cpf, String tel, Morador moradorVisitado) {
         super(nome, cpf, tel);
         this.moradorVisitado = moradorVisitado;
-        setDataVisita();
+        this.dataVisita = LocalDateTime.now();
     }
 
     @Override
@@ -22,7 +22,7 @@ public class Visitante extends Pessoa{
 
     @Override
     public String toString() {
-        return "Nome: " + super.getNome() + " | CPF: " + super.getCPF() + " | Telefone: " + super.getTel() + " | Morador (Endereço): " + this.getMoradorVisitado().getEnderecoMorador();
+        return "Nome: " + super.getNome() + " | CPF: " + super.getCPF() + " | Telefone: " + super.getTel() + "\nMorador Visitado: " + this.getMoradorVisitado().getNome() + " | Morador (Endereço): " + this.getMoradorVisitado().getEnderecoMorador();
     }
 
     public Morador getMoradorVisitado() {
@@ -32,12 +32,17 @@ public class Visitante extends Pessoa{
         this.moradorVisitado = moradorVisitado;
     }
 
-    public String getDataVisita() {
-        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    public String getDataVisitaFormatada() {
+        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm");
         return this.dataVisita.format(formatador);
     }
-    public void setDataVisita() {
-        this.dataVisita = LocalDateTime.now();
+
+    public LocalDateTime getDataVisita() {
+        return this.dataVisita;
+    }
+
+    public void setDataVisita(LocalDateTime data) {
+        this.dataVisita = data;
     }
 
 }

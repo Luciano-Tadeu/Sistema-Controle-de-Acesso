@@ -49,6 +49,40 @@ public abstract class CSS {
         return botao;
     }
 
+    public Button customizarBotaoTabela(String texto) {
+        Button botao = new Button(texto);
+        botao.setPrefWidth(80); 
+        botao.setPrefHeight(25);
+        botao.setAlignment(Pos.CENTER); 
+        
+        // Estilo Normal: Fundo Alternative (#8FC0A9) e fonte Poppins
+        String estiloNormal = "-fx-background-color: #4A7C59; " +
+                              "-fx-text-fill: white; " +
+                              "-fx-font-family: 'Poppins'; " + 
+                              "-fx-font-weight: bold; " +
+                              "-fx-font-size: 10px; " +
+                              "-fx-background-radius: 25;";
+                              
+        // Estilo Hover: Fundo Tertiary (#68B0AB) para dar destaque ao passar o mouse
+        String estiloHover = "-fx-background-color: #8FC0A9; " +
+                     "-fx-text-fill: white; " +
+                     "-fx-font-family: 'Poppins'; " + 
+                     "-fx-font-weight: bold; " +
+                     "-fx-font-size: 10px; " +
+                     "-fx-background-radius: 25; " +
+                     "-fx-border-color: #4A7C59; " + // Define a cor da borda (ex: Dark Slate Gray)
+                     "-fx-border-width: 2px; " +     // Define a espessura da borda
+                     "-fx-border-radius: 25;";       // Arredonda a borda para acompanhar o fundo
+
+        botao.setStyle(estiloNormal);
+        botao.setCursor(Cursor.HAND);
+
+        botao.setOnMouseEntered(e -> botao.setStyle(estiloHover));
+        botao.setOnMouseExited(e -> botao.setStyle(estiloNormal));
+
+        return botao;
+    }
+
     public Button criarBotaoGridLtop(String texto, String caminhoImagemPng) {
         Button btn = new Button(texto);
         btn.setPrefSize(215, 215); 
@@ -331,6 +365,134 @@ public abstract class CSS {
 
         layout.getChildren().addAll(lblTitulo, txtBusca, btnBuscar, btnVoltar);
         return layout;
+    }
+
+    // ========================================================================
+    // MÉTODOS DE FORMATAÇÃO E VALIDAÇÃO
+    // ========================================================================
+    public void aplicarFiltroNumerico(javafx.scene.control.TextField campo, int limiteCaracteres) {
+        java.util.function.UnaryOperator<javafx.scene.control.TextFormatter.Change> filtro = mudanca -> {
+            // Pega o texto que ficaria na tela se a digitação fosse aceita
+            String novoTexto = mudanca.getControlNewText();
+            
+            // Verifica se contém APENAS números (\\d*) E se o tamanho está dentro do limite
+            if (novoTexto.matches("\\d*") && novoTexto.length() <= limiteCaracteres) {
+                return mudanca; // Permite a digitação
+            }
+            
+            return null; // Bloqueia a digitação (o caractere nem aparece na tela)
+        };
+        
+        campo.setTextFormatter(new javafx.scene.control.TextFormatter<>(filtro));
+    }
+
+    public void estilizarInputErro(javafx.scene.control.TextField input) {
+        input.setPrefHeight(45);
+        input.setStyle("-fx-background-color: #fdaaaa50; -fx-background-radius: 10px; -fx-padding: 10px; -fx-font-family: 'Inter'; -fx-font-size: 14px;");
+    }
+
+    public boolean exibirConfirmacao(String titulo, String mensagem) {
+        javafx.scene.control.Alert alerta = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensagem);
+
+        // Estilizando o fundo geral e a fonte
+        alerta.getDialogPane().setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 14px; -fx-background-color: #FAF3DD;");
+
+        // ==========================================
+        // "PESCANDO" E ESTILIZANDO OS BOTÕES 
+        // ==========================================
+        javafx.scene.control.Button btnOk = (javafx.scene.control.Button) alerta.getDialogPane().lookupButton(javafx.scene.control.ButtonType.OK);
+        javafx.scene.control.Button btnCancelar = (javafx.scene.control.Button) alerta.getDialogPane().lookupButton(javafx.scene.control.ButtonType.CANCEL);
+
+        // Deixando os textos em português caso o sistema do PC esteja em inglês
+        btnOk.setText("Confirmar");
+        btnCancelar.setText("Cancelar");
+
+        // Estilo do Botão Confirmar (Verde Destaque)
+        btnOk.setStyle("-fx-background-color: #4A7C59; " +
+                       "-fx-text-fill: white; " +
+                       "-fx-font-family: 'Poppins'; " +
+                       "-fx-font-weight: bold; " +
+                       "-fx-background-radius: 8px; " +
+                       "-fx-padding: 8px 20px;");
+        btnOk.setCursor(javafx.scene.Cursor.HAND);
+
+        // Estilo do Botão Cancelar (Cinza Unselected)
+        btnCancelar.setStyle("-fx-background-color: #CDCDCD; " +
+                             "-fx-text-fill: #333333; " +
+                             "-fx-font-family: 'Poppins'; " +
+                             "-fx-font-weight: bold; " +
+                             "-fx-background-radius: 8px; " +
+                             "-fx-padding: 8px 20px;");
+        btnCancelar.setCursor(javafx.scene.Cursor.HAND);
+
+        // Pausa a tela e espera o clique do usuário
+        java.util.Optional<javafx.scene.control.ButtonType> resultado = alerta.showAndWait();
+
+        // Retorna true APENAS se o botão clicado foi o OK
+        return resultado.isPresent() && resultado.get() == javafx.scene.control.ButtonType.OK;
+    }
+
+    public void exibirFinalizacao(String titulo, String mensagem) {
+        javafx.scene.control.Alert alerta = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensagem);
+
+        // Estilizando o fundo geral e a fonte
+        alerta.getDialogPane().setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 14px; -fx-background-color: #FAF3DD;");
+
+        // ==========================================
+        // "PESCANDO" E ESTILIZANDO OS BOTÕES 
+        // ==========================================
+        javafx.scene.control.Button btnOk = (javafx.scene.control.Button) alerta.getDialogPane().lookupButton(javafx.scene.control.ButtonType.OK);
+
+        // Deixando os textos em português caso o sistema do PC esteja em inglês
+        btnOk.setText("Ok");
+
+        // Estilo do Botão Confirmar (Verde Destaque)
+        btnOk.setStyle("-fx-background-color: #4A7C59; " +
+                       "-fx-text-fill: white; " +
+                       "-fx-font-family: 'Poppins'; " +
+                       "-fx-font-weight: bold; " +
+                       "-fx-background-radius: 8px; " +
+                       "-fx-padding: 8px 20px;");
+        btnOk.setCursor(javafx.scene.Cursor.HAND);
+
+        // Pausa a tela e espera o clique do usuário
+        java.util.Optional<javafx.scene.control.ButtonType> resultado = alerta.showAndWait();
+    }
+
+    public void exibirAlerta(String titulo, String erro) {
+        javafx.scene.control.Alert alerta = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(null);
+        alerta.setContentText(erro);
+
+        // Estilizando o fundo geral e a fonte
+        alerta.getDialogPane().setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 14px; -fx-background-color: #FAF3DD;");
+
+        // ==========================================
+        // "PESCANDO" E ESTILIZANDO OS BOTÕES 
+        // ==========================================
+        javafx.scene.control.Button btnOk = (javafx.scene.control.Button) alerta.getDialogPane().lookupButton(javafx.scene.control.ButtonType.OK);
+
+        // Deixando os textos em português caso o sistema do PC esteja em inglês
+        btnOk.setText("Ok");
+
+        // Estilo do Botão Confirmar (Verde Destaque)
+        btnOk.setStyle("-fx-background-color: #4A7C59; " +
+                       "-fx-text-fill: white; " +
+                       "-fx-font-family: 'Poppins'; " +
+                       "-fx-font-weight: bold; " +
+                       "-fx-background-radius: 8px; " +
+                       "-fx-padding: 8px 20px;");
+        btnOk.setCursor(javafx.scene.Cursor.HAND);
+
+        // Pausa a tela e espera o clique do usuário
+        java.util.Optional<javafx.scene.control.ButtonType> resultado = alerta.showAndWait();
     }
 
 }

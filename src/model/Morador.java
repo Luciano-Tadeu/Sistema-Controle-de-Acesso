@@ -60,6 +60,4 @@ public class Morador extends Pessoa {
         this.enderecoMorador = enderecoMorador;
     }
 
-
-
 }
