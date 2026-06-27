@@ -74,8 +74,7 @@ CREATE TABLE funcionarios (
     nome VARCHAR(100) NOT NULL,
     cpf VARCHAR(20) UNIQUE NOT NULL,
     telefone VARCHAR(20),
-    cargo VARCHAR(50),
-    turno VARCHAR(30)
+    funcao VARCHAR(50)
 );
 
 -- 5. Tabela de Prestadores de Serviço
