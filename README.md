@@ -29,9 +29,13 @@ Para rodar este projeto na sua máquina, você precisará:
 1. **Java Development Kit (JDK 17 ou superior)**
 2. **JavaFX SDK** (compatível com a sua versão do JDK)
 3. **MySQL Connector/J** (Driver JDBC)
-4. **db.properties** criar e configurar o arquivo com as infos do seu banco
+4. **db.properties** criar e configurar o arquivo com as informações do seu banco
 
-### Códigos para as tabelas no MySql
+### 🗄️ Códigos para as tabelas no MySQL
+
+Copie e cole o código abaixo no seu banco de dados para criar as tabelas com as regras de cascata:
+
+```sql
 CREATE DATABASE IF NOT EXISTS condominio;
 USE condominio;
 
