@@ -1,39 +1,39 @@
 ## Luciano Tadeu Simões Simplicio Junior / RGA: 202421901044
 ## Pedro Inácio de Oliveira Silva / RGA: 202421901056
 
-# 🏢 Sistema de Controle de Acesso (Condomínio)
+# 🏢 Access Control System (Condominium)
 
-Um sistema desktop completo e moderno para controle de acesso, gestão de moradores e registro de entradas e saídas de um condomínio. Desenvolvido com foco em boas práticas de Programação Orientada a Objetos (POO) para o curso de Engenharia de Computação da UFMT, este projeto consolida conceitos de arquitetura cliente-servidor, interfaces gráficas orientadas a eventos e persistência de dados.
+A complete and modern desktop system for access control, resident management, and entry/exit logging for a condominium. Developed focusing on good Object-Oriented Programming (OOP) practices for the Computer Engineering course at UFMT, this project consolidates concepts of client-server architecture, event-driven graphical interfaces, and data persistence.
 
-## 🚀 Funcionalidades e Diferenciais
+## 🚀 Features and Highlights
 
-- **Gestão de Moradores e Veículos:** Cadastro completo utilizando o padrão de interface *Wizard* (passo a passo) para alocação dinâmica de veículos por unidade.
-- **Controle de Prestadores e Visitantes:** Vinculação inteligente de prestadores e visitantes ao morador responsável.
-- **Proteção de Integridade (Banco de Dados):** Uso de restrições `ON DELETE CASCADE` garantindo que a exclusão de um morador remova automaticamente todos os seus registros vinculados, prevenindo dados órfãos.
-- **UI/UX Moderna e Segura:** Interface construída nativamente com JavaFX, fugindo do visual padrão do SO. Utiliza `TextFormatters` para validação de inputs em tempo real e proteção contra `ConcurrentModificationException` na manipulação de listas em memória.
-
----
-
-## 🛠️ Tecnologias Utilizadas
-
-- **Linguagem:** Java (Orientação a Objetos)
-- **Interface Gráfica:** JavaFX (Estilização via CSS inline e layouts responsivos com VBox/HBox)
-- **Banco de Dados:** MySQL (Suporte a instâncias Locais, Docker ou Nuvem via Aiven)
-- **IDE Recomendada:** Visual Studio Code (VS Code)
+- **Resident and Vehicle Management:** Comprehensive registration using a *Wizard* interface pattern (step-by-step) for dynamic vehicle allocation per unit.
+- **Service Provider and Visitor Control:** Smart linking of service providers and visitors to the responsible resident.
+- **Integrity Protection (Database):** Use of `ON DELETE CASCADE` constraints ensuring that the deletion of a resident automatically removes all their linked records, preventing orphan data.
+- **Modern and Secure UI/UX:** Interface built natively with JavaFX, steering clear of standard OS visuals. Utilizes `TextFormatters` for real-time input validation and protection against `ConcurrentModificationException` when manipulating in-memory lists.
 
 ---
 
-## ⚙️ Pré-requisitos e Configuração do Ambiente
+## 🛠️ Technologies Used
 
-Para rodar este projeto na sua máquina, você precisará:
-1. **Java Development Kit (JDK 17 ou superior)**
-2. **JavaFX SDK** (compatível com a sua versão do JDK)
-3. **MySQL Connector/J** (Driver JDBC)
-4. **db.properties** criar e configurar o arquivo com as informações do seu banco
+- **Language:** Java (Object-Oriented)
+- **Graphical Interface:** JavaFX (Inline CSS styling and responsive layouts with VBox/HBox)
+- **Database:** MySQL (Support for Local instances, Docker, or Cloud via Aiven)
+- **Recommended IDE:** Visual Studio Code (VS Code)
 
-### 🗄️ Códigos para as tabelas no MySQL
+---
 
-Copie e cole o código abaixo no seu banco de dados para criar as tabelas com as regras de cascata:
+## ⚙️ Prerequisites and Environment Setup
+
+To run this project on your machine, you will need:
+1. **Java Development Kit (JDK 17 or higher)**
+2. **JavaFX SDK** (compatible with your JDK version)
+3. **MySQL Connector/J** (JDBC Driver)
+4. **db.properties:** create and configure the file with your database information.
+
+### 🗄️ MySQL Table Scripts
+
+Copy and paste the code below into your database to create the tables with the cascade rules:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS condominio;
@@ -91,3 +91,4 @@ CREATE TABLE prestadores (
     morador_id INT NOT NULL,
     CONSTRAINT prestadores_ibfk_1 FOREIGN KEY (morador_id) REFERENCES moradores(id) ON DELETE CASCADE
 );
+```
