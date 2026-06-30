@@ -1,5 +1,8 @@
 package model;
 
+import java.util.concurrent.CompletableFuture;
+
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -58,7 +61,7 @@ public class TelaVisitas extends CSS{
         btnCadastrar.setOnAction(e -> trocarSubTela(containerPai, criarTelaCadastroVisita(containerPai)));
         
         btnListar.setOnAction(e -> trocarSubTela(containerPai, criarTelaListarVisitas(containerPai)));
-        btnEditar.setOnAction(e -> trocarSubTela(containerPai, criarTelaBuscaCPFGenerica(containerPai, "Editar Visitante", () -> criarGridVisitas(containerPai))));
+        btnEditar.setOnAction(e -> trocarSubTela(containerPai, criarTelaBuscarVisita(containerPai)));
         btnExcluir.setOnAction(e -> trocarSubTela(containerPai, criarTelaExcluirVisita(containerPai)));
 
         layout.getChildren().addAll(lblTitulo, grid);
@@ -136,8 +139,6 @@ public class TelaVisitas extends CSS{
 
                         if(moradorVisitado != null){
                             novoVisitante = new Visitante(nome, CPF, telefone, moradorVisitado);
-                            this.controlador.adicionarVisitante(novoVisitante);
-                            banco.salvarVisita(novoVisitante);
                             cadastroValido = true; 
                         }
                         else{
@@ -151,6 +152,24 @@ public class TelaVisitas extends CSS{
                         String mensagemFinal = novoVisitante.toString();
                         exibirFinalizacao("Cadastro Finalizado", mensagemFinal);
                         trocarSubTela(containerPai, criarGridVisitas(containerPai));
+
+                        String mensagemRegistro = "Cadastro do Visitante: " + novoVisitante.getNome() + " CPF: " + novoVisitante.getCPF();
+                        Registro novoRegistroVisitante = new Registro("Admin", mensagemRegistro);
+
+                        CompletableFuture.runAsync(() -> {
+                            novoRegistroVisitante.setId(banco.salvarRegistro(novoRegistroVisitante));
+                            banco.salvarVisita(novoVisitante);
+                        }).thenRun(() -> {
+                            Platform.runLater(() -> {
+                                controlador.adicionarRegistro(novoRegistroVisitante);
+                                this.controlador.adicionarVisitante(novoVisitante);
+                            });
+                        }).exceptionally(ex -> {
+                            Platform.runLater(() -> {
+                                System.out.println("Erro ao salvar: " + ex.getMessage());
+                            });
+                            return null;
+                        });
                     };
         });
 
@@ -159,6 +178,23 @@ public class TelaVisitas extends CSS{
     }
 
     private VBox criarTelaListarVisitas(StackPane containerPai){
+
+        String mensagemRegistro = "Listou todos os visitantes";
+        Registro novoRegistroVisitanteListar = new Registro("Admin", mensagemRegistro);
+        
+        CompletableFuture.runAsync(() -> {
+            novoRegistroVisitanteListar.setId(banco.salvarRegistro(novoRegistroVisitanteListar));
+        }).thenRun(() -> {
+            Platform.runLater(() -> {
+                controlador.adicionarRegistro(novoRegistroVisitanteListar);
+            });
+        }).exceptionally(ex -> {
+            Platform.runLater(() -> {
+                System.out.println("Erro ao salvar: " + ex.getMessage());
+            });
+            return null;
+        });
+
         VBox layout = new VBox(20);
         layout.setAlignment(Pos.TOP_CENTER);
         layout.setPadding(new Insets(30)); 
@@ -271,8 +307,27 @@ public class TelaVisitas extends CSS{
             }
             else{
                 if(exibirConfirmacao("Excluir?", visitanteBuscado.toString())){
-                    banco.removerVisita(visitanteBuscado);
-                    controlador.getVisitantes().remove(visitanteBuscado);
+
+                    final Visitante alvo = visitanteBuscado;
+
+                    String mensagemRegistro = "Excluiu o Visitante: " + visitanteBuscado.getNome() + " CPF: " + visitanteBuscado.getCPF();
+                    Registro novoRegistroVisitanteExcluir = new Registro("Admin", mensagemRegistro);
+
+                    CompletableFuture.runAsync(() -> {
+                        novoRegistroVisitanteExcluir.setId(banco.salvarRegistro(novoRegistroVisitanteExcluir));
+                        banco.removerVisita(alvo);
+                    }).thenRun(() -> {
+                        Platform.runLater(() -> {
+                            controlador.adicionarRegistro(novoRegistroVisitanteExcluir);
+                            controlador.getVisitantes().remove(alvo);
+                        });
+                    }).exceptionally(ex -> {
+                        Platform.runLater(() -> {
+                            System.out.println("Erro ao salvar: " + ex.getMessage());
+                        });
+                        return null;
+                    });
+
                     exibirFinalizacao("Sucesso", "Visitante excluído!");
                     trocarSubTela(containerPai, criarGridVisitas(containerPai));
                     }
@@ -283,4 +338,163 @@ public class TelaVisitas extends CSS{
         layout.getChildren().addAll(lblTitulo, txtBusca, btnBuscar, btnVoltar);
         return layout;
     }
+
+    public VBox criarTelaBuscarVisita(StackPane containerPai) {
+        VBox layout = new VBox(20);
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(300);
+
+        Label lblTitulo = new Label("Editar Visitante");
+        lblTitulo.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 24px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
+
+        javafx.scene.control.TextField txtBusca = new javafx.scene.control.TextField();
+        txtBusca.setPromptText("CPF");
+        estilizarInput(txtBusca);
+        aplicarFiltroNumerico(txtBusca, 11);
+
+        Button btnBuscar = customizarBotaoMenu("Buscar");
+        Button btnVoltar = customizarBotaoMenu("Voltar");
+        btnVoltar.setStyle(btnVoltar.getStyle().replace("#8FC0A9", "#CDCDCD"));
+        btnVoltar.setOnAction(e -> trocarSubTela(containerPai, criarGridVisitas(containerPai)));
+        btnBuscar.setOnAction(e -> {
+            Visitante visitanteBuscado = null;
+
+            for(Visitante v : controlador.getVisitantes()){
+                if(v.getCPF().trim().equals(txtBusca.getText())){
+                    visitanteBuscado = v;
+                    break;
+                }
+            }
+
+            if(visitanteBuscado == null){
+                exibirAlerta("ERRO", "Visitante não encontrado");
+            }
+            else{
+                if(exibirConfirmacao("Editar?", visitanteBuscado.toString())){
+                    trocarSubTela(containerPai, criarTelaEditarVisita(containerPai, visitanteBuscado));
+                    }
+                else return;
+                }
+        });
+
+        layout.getChildren().addAll(lblTitulo, txtBusca, btnBuscar, btnVoltar);
+        return layout;
+    }
+
+    private VBox criarTelaEditarVisita(StackPane containerPai, Visitante v) {
+        VBox layout = new VBox(15);
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(400);
+
+        Label lblTitulo = new Label("Editar Visita");
+        lblTitulo.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 24px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
+
+        javafx.scene.control.TextField txtNome = new javafx.scene.control.TextField();
+        txtNome.setPromptText("Nome");
+        txtNome.setText(v.getNome());
+        estilizarInput(txtNome);
+
+        javafx.scene.control.TextField txtCpf = new javafx.scene.control.TextField();
+        txtCpf.setPromptText("CPF");
+        txtCpf.setText(v.getCPF());
+        estilizarInput(txtCpf);
+        aplicarFiltroNumerico(txtCpf, 11);
+
+        javafx.scene.control.TextField txtTelefone = new javafx.scene.control.TextField();
+        txtTelefone.setPromptText("Telefone");
+        txtTelefone.setText(v.getTel());
+        estilizarInput(txtTelefone);
+        aplicarFiltroNumerico(txtTelefone, 11);
+
+        javafx.scene.control.TextField txtMoradorAlvo = new javafx.scene.control.TextField();
+        txtMoradorAlvo.setPromptText("Endereço Morador Visitado");
+        txtMoradorAlvo.setText(v.getMoradorVisitado().getEnderecoMorador());
+        estilizarInput(txtMoradorAlvo);
+
+        Button btnSalvar = customizarBotaoMenu("Salvar"); 
+        Button btnVoltar = customizarBotaoMenu("Voltar");
+        btnVoltar.setStyle(btnVoltar.getStyle().replace("#8FC0A9", "#CDCDCD")); 
+
+        btnVoltar.setOnAction(e -> trocarSubTela(containerPai, criarGridVisitas(containerPai)));
+        btnSalvar.setOnAction(e -> {
+                    // =========================
+                    // LÓGICA EDITAR VISITA
+                    // =========================
+                    Morador moradorVisitado = null; 
+                    boolean cadastroValido = false;
+
+                    String nome = txtNome.getText().trim();
+                    String CPF = txtCpf.getText().trim();
+                    String telefone = txtTelefone.getText().trim();
+                    String endereco = txtMoradorAlvo.getText().trim();
+
+                    if (nome.isEmpty() || CPF.isEmpty() || telefone.isEmpty() || endereco.isEmpty()) {
+                        if(nome.isEmpty()) estilizarInputErro(txtNome);
+                        else estilizarInput(txtNome);
+                        if(CPF.isEmpty()) estilizarInputErro(txtCpf);
+                        else estilizarInput(txtCpf);
+                        if(telefone.isEmpty()) estilizarInputErro(txtTelefone);
+                        else estilizarInput(txtTelefone);
+                        if(endereco.isEmpty()) estilizarInputErro(txtMoradorAlvo);
+                        else estilizarInput(txtMoradorAlvo);
+                        return; 
+                    }
+
+                    String mensagem = "Nome: " + nome + 
+                                    "\nCPF: " + CPF + 
+                                    "\nTelefone: " + telefone + 
+                                    "\nMorador: " + endereco;
+
+                    if (exibirConfirmacao("Confirmar Edição?", mensagem)) {
+                        for(Morador m : controlador.getMoradores()){
+                            if(m.getEnderecoMorador().equalsIgnoreCase(endereco)){
+                                moradorVisitado = m;
+                                break;
+                            }
+                        }
+
+                        if(moradorVisitado != null){
+                            String cpfTempV = v.getCPF();
+                            v.setCPF(CPF);
+                            v.setMoradorVisitado(moradorVisitado);
+                            String cpfTempM = v.getMoradorVisitado().getCPF();
+                            v.setNome(nome);
+                            v.setTel(telefone);
+
+                            String mensagemRegistro = "Visitante Nome: " + v.getNome() + " CPF: " + v.getCPF() + " editado";
+                            Registro novoRegistroVisitanteEditar = new Registro("Admin", mensagemRegistro);
+                            CompletableFuture.runAsync(() -> {
+                                banco.editarVisitante(v, cpfTempV, cpfTempM);
+                                novoRegistroVisitanteEditar.setId(banco.salvarRegistro(novoRegistroVisitanteEditar));
+                            }).thenRun(() -> {
+                                Platform.runLater(() -> {
+                                    controlador.adicionarRegistro(novoRegistroVisitanteEditar);
+                                });
+                                
+                            }).exceptionally(ex -> {
+                                Platform.runLater(() -> {
+                                    System.out.println("Erro ao salvar: " + ex.getMessage());
+                                });
+                                return null;
+                            });
+
+                            cadastroValido = true; 
+                        }
+                        else{
+                            exibirAlerta("ERRO", "Morador não encontrado.");
+                            return;
+                        }
+                        }
+                    else return;
+
+                    if(cadastroValido) {
+                        exibirFinalizacao("Sucesso", "Visitante Editado");
+                        trocarSubTela(containerPai, criarGridVisitas(containerPai));
+                    };
+        });
+
+        layout.getChildren().addAll(lblTitulo, txtNome, txtCpf, txtTelefone, txtMoradorAlvo, btnSalvar, btnVoltar);
+        return layout;
+    }
+
 }

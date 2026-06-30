@@ -5,24 +5,38 @@ import java.time.format.DateTimeFormatter;
 
 public class Registro {
     private int idReg;
+    private String usuario;
+    private String mensagem;
     private LocalDateTime dataHora;
-    private boolean acessoLiberado;
 
-    public Registro(int idReg) {
-        this.idReg = idReg;
+    public Registro(String user, String men) {
+        this.usuario = user;
+        this.mensagem = men;
+        setDataHora(LocalDateTime.now());
     }
 
-    public void exibirDadosRegistro(){
-        System.out.printf("---Registro %d ---\n", getIdReg());
-        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+    public String getDataHoraFormatada(){
+        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm:ss");
         String dataBonita = this.getDataHora().format(formatador);
-        System.out.println("Data: " + dataBonita);
-        System.out.printf("Acesso: %s\n", isAcessoLiberado()? "Liberado" : "Negado");
+        return dataBonita;
     }
 
-    public int getIdReg() {
+    public int getId() {
         return idReg;
     }
+
+    public void setId(int id){
+        this.idReg = id;
+    }
+
+    public String getMensagem(){
+        return this.mensagem;
+    }
+
+    public String getUsuario(){
+        return this.usuario;
+    }
+
     public void setIdReg(int idReg) {
         this.idReg = idReg;
     }
@@ -30,14 +44,8 @@ public class Registro {
     public LocalDateTime getDataHora() {
         return this.dataHora;
     }
-    public void setDataHora() {
-        this.dataHora = LocalDateTime.now();
+    public void setDataHora(LocalDateTime d) {
+        this.dataHora = d;
     }
 
-    public boolean isAcessoLiberado() {
-        return acessoLiberado;
-    }
-    public void setAcessoLiberado(boolean acessoLiberado) {
-        this.acessoLiberado = acessoLiberado;
-    }
 }

@@ -188,6 +188,28 @@ public class GerenciadorBancoDeDados {
                     controlador.adicionarPrestador(p);
                 }
                 System.out.println("Prestadores carregados com sucesso!");
+
+                String sqlRegistros = "SELECT * FROM registros";
+
+                try (PreparedStatement stmtReg = conn.prepareStatement(sqlRegistros);
+                    ResultSet rsReg = stmtReg.executeQuery()){
+                    
+                        while (rsReg.next()) {
+                            Registro novoRegistro = new Registro(
+                                rsReg.getString("usuario"),
+                                rsReg.getString("mensagem")
+                            );
+                            novoRegistro.setId(rsReg.getInt("id"));
+                            novoRegistro.setDataHora(LocalDateTime.parse(rsReg.getString("dataregistro")));
+                            controlador.adicionarRegistro(novoRegistro);
+                        }
+
+                } catch (Exception e) {
+                    System.out.println("Erro ao carregar registro do banco: " + e.getMessage());
+                }
+
+                System.out.println("Registros carregados com sucesso!");
+
             }} catch (SQLException e) {
             // Esse catch captura qualquer erro de banco em qualquer uma das partes!
             System.out.println("Erro crítico ao carregar dados iniciais da nuvem: " + e.getMessage());
@@ -290,7 +312,7 @@ public class GerenciadorBancoDeDados {
                 stmt.executeUpdate();
                 System.out.println("Funcionário salvo no MySQL com sucesso");
         } catch (SQLException e) {
-            System.out.println("Erro ao salvar visita no banco: " + e.getMessage());
+            System.out.println("Erro ao salvar funcionário no banco: " + e.getMessage());
         }
     }
 
@@ -398,6 +420,152 @@ public class GerenciadorBancoDeDados {
         }catch(Exception e){
             System.out.println("Erro ao remover prstador do banco: " + e.getMessage());
         }
+    }
+
+    public void editarMorador(Morador morador, String cpfAnterior){
+        String sqlMorador = "UPDATE moradores SET nome = ?, cpf = ?, telefone = ?, telefone = ? WHERE cpf = ?";
+
+        try (Connection conn = conectar(); 
+             PreparedStatement stmt = conn.prepareStatement(sqlMorador)) {
+                stmt.setString(1, morador.getNome());
+                stmt.setString(2, morador.getCPF());
+                stmt.setString(3, morador.getTel());
+                stmt.setString(4, morador.getTel());
+                stmt.setString(5, cpfAnterior);
+                stmt.executeUpdate();
+                System.out.println("Morador editado no MySQL com sucesso");
+        } catch (SQLException e) {
+            System.out.println("Erro ao editar morador no banco: " + e.getMessage());
+        }
+    }
+
+    public void editarVeiculo(Veiculo veiculo, String placaAntiga){
+
+        String sqlVeiculo = "UPDATE veiculos SET placa = ?, modelo = ?, cor = ? WHERE placa = ?";
+
+        try (Connection conn = conectar(); 
+             PreparedStatement stmt = conn.prepareStatement(sqlVeiculo)) {
+                stmt.setString(1, veiculo.getPlaca());
+                stmt.setString(2, veiculo.getModelo());
+                stmt.setString(3, veiculo.getCor());
+                stmt.setString(4, placaAntiga);
+                stmt.executeUpdate();
+                System.out.println("Veiculo editado no MySQL com sucesso");
+        } catch (SQLException e) {
+            System.out.println("Erro ao editar veiculo no banco: " + e.getMessage());
+        }
+    }
+
+    public void editarFuncionario(Funcionario funcionario, String cpfAnterior){
+        String sqlFuncionario = "UPDATE funcionarios SET nome = ?, cpf = ?, telefone = ?, funcao = ? WHERE cpf = ?";
+
+        try (Connection conn = conectar(); 
+             PreparedStatement stmt = conn.prepareStatement(sqlFuncionario)) {
+                stmt.setString(1, funcionario.getNome());
+                stmt.setString(2, funcionario.getCPF());
+                stmt.setString(3, funcionario.getTel());
+                stmt.setString(4, funcionario.getFuncao());
+                stmt.setString(5, cpfAnterior);
+                stmt.executeUpdate();
+                System.out.println("Funcionário editado no MySQL com sucesso");
+        } catch (SQLException e) {
+            System.out.println("Erro ao editar funcionário no banco: " + e.getMessage());
+        }
+    }
+
+    public void editarServico(PrestadorServico servico, String cpfAnteriorV, String cpfAnteriorM){
+
+        String sqlBuscarMorador = "SELECT * FROM moradores where cpf = ?";
+        Integer morador_id = null;
+        
+        try (Connection conn = conectar(); 
+             PreparedStatement stmt = conn.prepareStatement(sqlBuscarMorador)) {
+                stmt.setString(1, cpfAnteriorM);
+                ResultSet rs = stmt.executeQuery();
+                if(rs.next()){
+                    morador_id = rs.getInt("id");
+                }
+                System.out.println("Serviço editado no MySQL com sucesso");
+        } catch (SQLException e) {
+            System.out.println("Erro ao editar serviço no banco: " + e.getMessage());
+        }
+
+        String sqlVisitante = "UPDATE prestadores SET nome = ?, cpf = ?, telefone = ?, cnh = ?, tiposervico = ?, morador_id = ? WHERE cpf = ?";
+
+        try (Connection conn = conectar(); 
+             PreparedStatement stmt = conn.prepareStatement(sqlVisitante)) {
+                stmt.setString(1, servico.getNome());
+                stmt.setString(2, servico.getCPF());
+                stmt.setString(3, servico.getTel());
+                stmt.setString(4, servico.getCnh());
+                stmt.setString(5, servico.getTipoServico());
+                stmt.setInt(6, morador_id);
+                stmt.setString(7, cpfAnteriorV);
+                stmt.executeUpdate();
+                System.out.println("Serviço editado no MySQL com sucesso");
+        } catch (SQLException e) {
+            System.out.println("Erro ao editar serviço no banco: " + e.getMessage());
+        }
+    }
+
+    public void editarVisitante(Visitante visitante, String cpfAnteriorV, String cpfAnteriorM){
+
+        String sqlBuscarMorador = "SELECT * FROM moradores where cpf = ?";
+        Integer morador_id = null;
+        
+        try (Connection conn = conectar(); 
+             PreparedStatement stmt = conn.prepareStatement(sqlBuscarMorador)) {
+                stmt.setString(1, cpfAnteriorM);
+                ResultSet rs = stmt.executeQuery();
+                if(rs.next()){
+                    morador_id = rs.getInt("id");
+                }
+                System.out.println("Visitante editado no MySQL com sucesso");
+        } catch (SQLException e) {
+            System.out.println("Erro ao editar visitante no banco: " + e.getMessage());
+        }
+
+        String sqlVisitante = "UPDATE visitantes SET nome = ?, cpf = ?, telefone = ?, morador_id = ? WHERE cpf = ?";
+
+        try (Connection conn = conectar(); 
+             PreparedStatement stmt = conn.prepareStatement(sqlVisitante)) {
+                stmt.setString(1, visitante.getNome());
+                stmt.setString(2, visitante.getCPF());
+                stmt.setString(3, visitante.getTel());
+                stmt.setInt(4, morador_id);
+                stmt.setString(5, cpfAnteriorV);
+                stmt.executeUpdate();
+                System.out.println("Visitante editado no MySQL com sucesso");
+        } catch (SQLException e) {
+            System.out.println("Erro ao editar visitante no banco: " + e.getMessage());
+        }
+    }
+
+    public Integer salvarRegistro(Registro r){
+
+        String sqlRegistro = "INSERT INTO registros (usuario, mensagem, dataregistro) VALUES (?, ?, ?)";
+        String sqlPegarID = "SELECT id FROM registros WHERE dataregistro = ?";
+        int idTemp = -1;
+
+        try (Connection conn = conectar(); 
+             PreparedStatement stmt = conn.prepareStatement(sqlRegistro);
+             PreparedStatement stmtID = conn.prepareStatement(sqlPegarID)) {
+                stmt.setString(1, r.getUsuario());
+                stmt.setString(2, r.getMensagem());
+                stmt.setString(3, r.getDataHora().toString());
+                stmt.executeUpdate();
+                stmtID.setString(1, r.getDataHora().toString());
+                ResultSet rs = stmtID.executeQuery();
+                if(rs.next()){
+                    idTemp = rs.getInt("id");
+                }
+                System.out.println("Registro salvo no MySQL com sucesso");
+        } catch (SQLException e) {
+            System.out.println("Erro ao salvar registro no banco: " + e.getMessage());
+        }
+
+        return idTemp;
+
     }
 
 }

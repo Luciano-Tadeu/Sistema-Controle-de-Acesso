@@ -1,5 +1,8 @@
 package model;
 
+import java.util.concurrent.CompletableFuture;
+
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -63,7 +66,7 @@ public class TelaMorador extends CSS {
 
         btnCadastrar.setOnAction(e -> trocarSubTela(containerPai, criarTelaCadastroMorador(containerPai)));
         btnListar.setOnAction(e -> trocarSubTela(containerPai, criarTelaListarMoradores(containerPai)));
-        btnEditar.setOnAction(e -> trocarSubTela(containerPai, super.criarTelaListarGenerica(containerPai, "Editar Morador", () -> criarGridMoradores(containerPai))));
+        btnEditar.setOnAction(e -> trocarSubTela(containerPai, criarTelaBuscarEdicaoMorador(containerPai)));
         btnExcluir.setOnAction(e -> trocarSubTela(containerPai, criarTelaExcluirMorador(containerPai)));
 
         layout.getChildren().addAll(lblTitulo, grid);
@@ -182,7 +185,7 @@ public class TelaMorador extends CSS {
 
     private VBox criarTelaCadastroVeiculo(StackPane containerPai, model.Morador morador, int totalVeiculos, int veiculoAtual) {
         VBox layout = new VBox(15);
-        layout.setAlignment(Pos.CENTER_LEFT);
+        layout.setAlignment(Pos.CENTER);
         layout.setMaxWidth(400);
 
         Label lblTitulo = new Label("Cadastro de Veículo " + veiculoAtual + " / " + totalVeiculos);
@@ -239,17 +242,49 @@ public class TelaMorador extends CSS {
     }
 
     private void finalizarCadastroCompleto(StackPane containerPai, model.Morador moradorFinalizado) {
-        banco.salvarMoradorComVeiculos(moradorFinalizado);
         String mensagemFinal = moradorFinalizado.toString();
         for(Veiculo v : moradorFinalizado.getVeiculo()){
             mensagemFinal += "\n";
             mensagemFinal += v.toString();
         }
         exibirFinalizacao("Cadastro Finalizado", mensagemFinal);
+        String mensagemRegistro = "Cadastro do Morador: " + moradorFinalizado.getNome() + " CPF: " + moradorFinalizado.getCPF();
+        Registro novoRegistroMorador = new Registro("Admin", mensagemRegistro);
         trocarSubTela(containerPai, criarGridMoradores(containerPai));
+
+        CompletableFuture.runAsync(() -> {
+            banco.salvarMoradorComVeiculos(moradorFinalizado);
+            novoRegistroMorador.setId(banco.salvarRegistro(novoRegistroMorador));
+        }).thenRun(() -> {
+            Platform.runLater(() -> {
+                controlador.adicionarRegistro(novoRegistroMorador);
+            });
+        }).exceptionally(ex -> {
+            Platform.runLater(() -> {
+                System.out.println("Erro ao salvar: " + ex.getMessage());
+            });
+            return null;
+        });
     }
 
     private VBox criarTelaListarMoradores(StackPane containerPai) {
+
+        String mensagemRegistro = "Listou todos os moradores";
+        Registro novoRegistroMoradorListar = new Registro("Admin", mensagemRegistro);
+        
+        CompletableFuture.runAsync(() -> {
+            novoRegistroMoradorListar.setId(banco.salvarRegistro(novoRegistroMoradorListar));
+        }).thenRun(() -> {
+            Platform.runLater(() -> {
+                controlador.adicionarRegistro(novoRegistroMoradorListar);
+            });
+        }).exceptionally(ex -> {
+            Platform.runLater(() -> {
+                System.out.println("Erro ao salvar: " + ex.getMessage());
+            });
+            return null;
+        });
+
         VBox layout = new VBox(20);
         layout.setAlignment(Pos.TOP_CENTER);
         // O padding empurra o conteúdo para não colar nas bordas do cartão branco
@@ -386,12 +421,31 @@ public class TelaMorador extends CSS {
             else{
                 if(exibirConfirmacao("Excluir?", moradorBuscado.toString())){
                     final Morador alvo = moradorBuscado;
+
+                    String mensagemRegistro = "Excluiu o Morador: " + alvo.getNome() + " CPF: " + alvo.getCPF() + " e suas dependências";
+                    Registro novoRegistroMoradorExcluir = new Registro("Admin", mensagemRegistro);
+                    
                     controlador.getVisitantes().removeIf(v -> v.getMoradorVisitado() == alvo);
                     controlador.getPrestadores().removeIf(p -> p.getMorador() == alvo);
-                    banco.removerMorador(moradorBuscado);
-                    controlador.getMoradores().remove(moradorBuscado);
+
                     exibirFinalizacao("Sucesso", "Morador excluído!");
                     trocarSubTela(containerPai, criarGridMoradores(containerPai));
+
+                    CompletableFuture.runAsync(() -> {
+                        novoRegistroMoradorExcluir.setId(banco.salvarRegistro(novoRegistroMoradorExcluir));
+                        banco.removerMorador(alvo);
+                    }).thenRun(() -> {
+                        Platform.runLater(() -> {
+                            controlador.adicionarRegistro(novoRegistroMoradorExcluir);
+                            controlador.getMoradores().remove(alvo);
+                        });
+                    }).exceptionally(ex -> {
+                        Platform.runLater(() -> {
+                            System.out.println("Erro ao salvar: " + ex.getMessage());
+                        });
+                        return null;
+                    });
+
                     }
                 else return;
                 }
@@ -400,4 +454,234 @@ public class TelaMorador extends CSS {
         layout.getChildren().addAll(lblTitulo, txtBusca, btnBuscar, btnVoltar);
         return layout;
     }
+
+    public VBox criarTelaBuscarEdicaoMorador(StackPane containerPai) {
+        VBox layout = new VBox(20);
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(300);
+
+        Label lblTitulo = new Label("Editar Morador");
+        lblTitulo.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 24px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
+
+        javafx.scene.control.TextField txtBusca = new javafx.scene.control.TextField();
+        txtBusca.setPromptText("CPF");
+        estilizarInput(txtBusca);
+        aplicarFiltroNumerico(txtBusca, 11);
+
+        Button btnBuscar = customizarBotaoMenu("Buscar");
+        Button btnVoltar = customizarBotaoMenu("Voltar");
+        btnVoltar.setStyle(btnVoltar.getStyle().replace("#8FC0A9", "#CDCDCD"));
+        btnVoltar.setOnAction(e -> trocarSubTela(containerPai, criarGridMoradores(containerPai)));
+        btnBuscar.setOnAction(e -> {
+            Morador moradorBuscado = null;
+
+            for(Morador m : controlador.getMoradores()){
+                if(m.getCPF().trim().equals(txtBusca.getText())){
+                    moradorBuscado = m;
+                    break;
+                }
+            }
+
+            if(moradorBuscado == null){
+                exibirAlerta("ERRO", "Morador não encontrado");
+            }
+            else{
+                if(exibirConfirmacao("Editar?", moradorBuscado.toString())){
+                    trocarSubTela(containerPai, criarTelaEdicaoMorador(containerPai, moradorBuscado));
+                    }
+                else return;
+                }
+        });
+
+        layout.getChildren().addAll(lblTitulo, txtBusca, btnBuscar, btnVoltar);
+        return layout;
+    }
+
+    public VBox criarTelaEdicaoMorador(StackPane containerPai, Morador m) {
+        VBox layout = new VBox(15);
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(400); // Limita a largura do formulário
+
+        Label lblTitulo = new Label("Editar Morador");
+        lblTitulo.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 24px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
+
+        javafx.scene.control.TextField txtNome = new javafx.scene.control.TextField();
+        txtNome.setPromptText("Nome Completo");
+        txtNome.setText(m.getNome());
+        estilizarInput(txtNome);
+
+        javafx.scene.control.TextField txtCpf = new javafx.scene.control.TextField();
+        txtCpf.setPromptText("CPF");
+        txtCpf.setText(m.getCPF());
+        estilizarInput(txtCpf);
+        aplicarFiltroNumerico(txtCpf, 11);
+
+        javafx.scene.control.TextField txtTelefone = new javafx.scene.control.TextField();
+        txtTelefone.setPromptText("Telefone");
+        txtTelefone.setText(m.getTel());
+        estilizarInput(txtTelefone);
+        aplicarFiltroNumerico(txtTelefone, 11);
+
+        javafx.scene.control.TextField txtEndereco = new javafx.scene.control.TextField();
+        txtEndereco.setPromptText("Endereço");
+        txtEndereco.setText(m.getEnderecoMorador());
+        estilizarInput(txtEndereco);
+
+        Button btnSalvar = customizarBotaoMenu("Salvar"); // Reutilizando seu estilo
+        Button btnVoltar = customizarBotaoMenu("Voltar");
+        btnVoltar.setStyle(btnVoltar.getStyle().replace("#8FC0A9", "#CDCDCD")); // Muda a cor para o seu "Unselected"
+
+        btnVoltar.setOnAction(e -> trocarSubTela(containerPai, criarGridMoradores(containerPai)));
+        btnSalvar.setOnAction(e -> {
+                    // =========================
+                    // LÓGICA EDIÇÃO MORADOR
+                    // =========================
+                    boolean edicaoValida = false;
+
+                    String nome = txtNome.getText().trim();
+                    String CPF = txtCpf.getText().trim();
+                    String telefone = txtTelefone.getText().trim();
+                    String endereco = txtEndereco.getText().trim();
+
+                    if (nome.isEmpty() || CPF.isEmpty() || telefone.isEmpty() || endereco.isEmpty()) {
+                        if(nome.isEmpty()) estilizarInputErro(txtNome);
+                        else estilizarInput(txtNome);
+                        if(CPF.isEmpty()) estilizarInputErro(txtCpf);
+                        else estilizarInput(txtCpf);
+                        if(telefone.isEmpty()) estilizarInputErro(txtTelefone);
+                        else estilizarInput(txtTelefone);
+                        if(endereco.isEmpty()) estilizarInputErro(txtEndereco);
+                        else estilizarInput(txtEndereco);
+                        return; 
+                    }
+
+                    String mensagem = "Nome: " + nome + 
+                                    "\nCPF: " + CPF + 
+                                    "\nTelefone: " + telefone + 
+                                    "\nEndereço: " + endereco;
+                    
+
+                    if (exibirConfirmacao("Confirmar Edição?", mensagem)) {
+                            m.setNome(nome);
+                            String cpfTemp = m.getCPF();
+                            m.setCPF(CPF);
+                            m.setTel(telefone);
+                            m.setEnderecoMorador(endereco);
+                            String mensagemRegistro = "Morador Nome: " + m.getNome() + " CPF: " + m.getCPF() + " editado";
+                            Registro novoRegistroMoradorEditar = new Registro("Admin", mensagemRegistro);
+                            edicaoValida = true;
+                            CompletableFuture.runAsync(() -> {
+                                banco.editarMorador(m, cpfTemp);
+                                novoRegistroMoradorEditar.setId(banco.salvarRegistro(novoRegistroMoradorEditar));
+                            }).thenRun(() -> {
+                                Platform.runLater(() -> {
+                                    controlador.adicionarRegistro(novoRegistroMoradorEditar);
+                                });
+                                
+                            }).exceptionally(ex -> {
+                                Platform.runLater(() -> {
+                                    System.out.println("Erro ao salvar: " + ex.getMessage());
+                                });
+                                return null;
+                            });
+                        }
+                    else return;
+
+                    if(edicaoValida) {
+                        if(m.getVeiculo().size() > 0){
+                            if(exibirConfirmacao("Editar veículos?", "Gostaria de editar os veículos?")){
+                                trocarSubTela(containerPai, criarTelaEdicaoVeiculo(containerPai, m, m.getVeiculo().size() + 1, 1));
+                            }
+                            else{
+                                trocarSubTela(containerPai, criarGridMoradores(containerPai));
+                            }
+                        }
+                        else {
+                            trocarSubTela(containerPai, criarGridMoradores(containerPai));
+                        }
+                    };
+        });
+
+        layout.getChildren().addAll(lblTitulo, txtNome, txtCpf, txtTelefone, txtEndereco, btnSalvar, btnVoltar);
+        return layout;
+    }
+
+    private VBox criarTelaEdicaoVeiculo(StackPane containerPai, model.Morador morador, int totalVeiculos, int veiculoAtual) {
+
+        VBox layout = new VBox(15);
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(400);
+
+        Label lblTitulo = new Label("Edição de Veículo " + veiculoAtual + " / " + (totalVeiculos - 1));
+        lblTitulo.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 24px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
+
+        javafx.scene.control.TextField txtPlaca = new javafx.scene.control.TextField();
+        txtPlaca.setPromptText("Placa");
+        txtPlaca.setText(morador.getVeiculo().get(veiculoAtual - 1).getPlaca());
+        estilizarInput(txtPlaca);
+
+        javafx.scene.control.TextField txtModelo = new javafx.scene.control.TextField();
+        txtModelo.setPromptText("Modelo");
+        txtModelo.setText(morador.getVeiculo().get(veiculoAtual - 1).getModelo());
+        estilizarInput(txtModelo);
+
+        javafx.scene.control.TextField txtCor = new javafx.scene.control.TextField();
+        txtCor.setPromptText("Cor");
+        txtCor.setText(morador.getVeiculo().get(veiculoAtual - 1).getCor());
+        estilizarInput(txtCor);
+
+        Button btnSalvar = customizarBotaoMenu(veiculoAtual < totalVeiculos ? "Salvar" : "Finalizar");
+
+        btnSalvar.setOnAction(e -> {
+            String placa = txtPlaca.getText().trim();
+            String modelo = txtModelo.getText().trim();
+            String cor = txtCor.getText().trim();
+
+            if (placa.isEmpty() || modelo.isEmpty() || cor.isEmpty()) {
+                if(placa.isEmpty()) estilizarInputErro(txtPlaca);
+                else estilizarInput(txtPlaca);
+                if(modelo.isEmpty()) estilizarInputErro(txtModelo);
+                else estilizarInput(txtModelo);
+                if(cor.isEmpty()) estilizarInputErro(txtCor);
+                else estilizarInput(txtCor);
+                return;
+            }
+
+            String mensagem = "Placa: " + placa + 
+                            "\nModelo: " + modelo + 
+                            "\nCor: " + cor;
+
+            if (exibirConfirmacao("Confirmar Edição?", mensagem)) {
+                    String placaTemp = morador.getVeiculo().get(veiculoAtual - 1).getPlaca();
+                    morador.getVeiculo().get(veiculoAtual - 1).setPlaca(placa);
+                    morador.getVeiculo().get(veiculoAtual - 1).setModelo(modelo);
+                    morador.getVeiculo().get(veiculoAtual - 1).setCor(cor);
+                    CompletableFuture.runAsync(() -> {
+                        banco.editarVeiculo(morador.getVeiculo().get(veiculoAtual - 1), placaTemp);
+                    }).thenRun(() -> {
+                        Platform.runLater(() -> {
+
+                        });
+                    }).exceptionally(ex -> {
+                        Platform.runLater(() -> {
+                            System.out.println("Erro ao salvar: " + ex.getMessage());
+                        });
+                        return null;
+                    });
+                }
+            else return;
+
+            if (veiculoAtual < totalVeiculos - 1) {
+                trocarSubTela(containerPai, criarTelaCadastroVeiculo(containerPai, morador, totalVeiculos, veiculoAtual + 1));
+            } else {
+                exibirFinalizacao("Sucesso", "Edição concluída!");
+                trocarSubTela(containerPai, criarGridMoradores(containerPai));
+            }
+
+        });
+
+        layout.getChildren().addAll(lblTitulo, txtPlaca, txtModelo, txtCor, btnSalvar);
+        return layout;
+    }
+
 }

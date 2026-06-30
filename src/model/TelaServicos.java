@@ -1,7 +1,9 @@
 package model;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -65,7 +67,7 @@ public class TelaServicos extends CSS{
 
         btnCadastrar.setOnAction(e -> trocarSubTela(containerPai, criarTelaCadastroServicos(containerPai)));
         btnListar.setOnAction(e -> trocarSubTela(containerPai, criarTelaListarServicos(containerPai)));
-        btnEditar.setOnAction(e -> trocarSubTela(containerPai, criarTelaBuscaCPFGenerica(containerPai, "Editar Serviços", () -> criarGridServicos(containerPai))));
+        btnEditar.setOnAction(e -> trocarSubTela(containerPai, criarTelaBuscarEditarServico(containerPai)));
         btnExcluir.setOnAction(e -> trocarSubTela(containerPai, criarTelaExcluirServico(containerPai)));
         btnEntrar.setOnAction(e -> trocarSubTela(containerPai, criarTelaListarEntrada(containerPai)));
         btnSair.setOnAction(e -> trocarSubTela(containerPai, criarTelaListarSaida(containerPai)));
@@ -79,7 +81,7 @@ public class TelaServicos extends CSS{
         layout.setAlignment(Pos.CENTER);
         layout.setMaxWidth(400);
 
-        Label lblTitulo = new Label("Novo Funcionário");
+        Label lblTitulo = new Label("Novo Serviço");
         lblTitulo.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 24px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
 
         javafx.scene.control.TextField txtNome = new javafx.scene.control.TextField();
@@ -116,7 +118,7 @@ public class TelaServicos extends CSS{
         btnVoltar.setOnAction(e -> trocarSubTela(containerPai, criarGridServicos(containerPai)));
         btnSalvar.setOnAction(e -> {
                     // =========================
-                    // LÓGICA CADASTRO FUNCIONÁRIO
+                    // LÓGICA CADASTRO SERVIÇOS
                     // ========================= 
                     boolean cadastroValido = false;
                     PrestadorServico novoPrestador;
@@ -161,9 +163,7 @@ public class TelaServicos extends CSS{
                             }
 
                             if(moradorServico != null){
-                                novoPrestador = new PrestadorServico(nome, CPF, telefone, cnh, tiposervico, moradorServico);
-                                this.controlador.adicionarPrestador(novoPrestador);
-                                banco.salvarPrestador(novoPrestador);
+                                novoPrestador = new PrestadorServico(nome, CPF, telefone, cnh, tiposervico, moradorServico);    
                                 cadastroValido = true; 
                             }
                             else{
@@ -178,6 +178,24 @@ public class TelaServicos extends CSS{
                         String mensagemFinal = novoPrestador.toString();
                         exibirFinalizacao("Cadastro Finalizado", mensagemFinal);
                         trocarSubTela(containerPai, criarGridServicos(containerPai));
+
+                        String mensagemRegistro = "Cadastro do Prestador: " + novoPrestador.getNome() + " CPF: " + novoPrestador.getCPF();
+                        Registro novoRegistroServico = new Registro("Admin", mensagemRegistro);
+
+                        CompletableFuture.runAsync(() -> {
+                            novoRegistroServico.setId(banco.salvarRegistro(novoRegistroServico));
+                            banco.salvarPrestador(novoPrestador);
+                        }).thenRun(() -> {
+                            Platform.runLater(() -> {
+                                controlador.adicionarRegistro(novoRegistroServico);
+                                this.controlador.adicionarPrestador(novoPrestador);
+                            });
+                        }).exceptionally(ex -> {
+                            Platform.runLater(() -> {
+                                System.out.println("Erro ao salvar: " + ex.getMessage());
+                            });
+                            return null;
+                        });
                     };
         });
 
@@ -186,6 +204,23 @@ public class TelaServicos extends CSS{
     }
 
         private VBox criarTelaListarServicos(StackPane containerPai){
+
+        String mensagemRegistro = "Listou todos os serviços";
+        Registro novoRegistroServicoListar = new Registro("Admin", mensagemRegistro);
+        
+        CompletableFuture.runAsync(() -> {
+            novoRegistroServicoListar.setId(banco.salvarRegistro(novoRegistroServicoListar));
+        }).thenRun(() -> {
+            Platform.runLater(() -> {
+                controlador.adicionarRegistro(novoRegistroServicoListar);
+            });
+        }).exceptionally(ex -> {
+            Platform.runLater(() -> {
+                System.out.println("Erro ao salvar: " + ex.getMessage());
+            });
+            return null;
+        });
+
         VBox layout = new VBox(20);
         layout.setAlignment(Pos.TOP_CENTER);
         layout.setPadding(new Insets(30)); 
@@ -298,10 +333,29 @@ public class TelaServicos extends CSS{
             }
             else{
                 if(exibirConfirmacao("Excluir?", prestadorBuscado.toString())){
-                    banco.removerPrestador(prestadorBuscado);
-                    controlador.getPrestadores().remove(prestadorBuscado);
                     exibirFinalizacao("Sucesso", "Prestador excluído!");
                     trocarSubTela(containerPai, criarGridServicos(containerPai));
+
+                    final PrestadorServico alvo = prestadorBuscado;
+
+                    String mensagemRegistro = "Excluiu o Prestador: " + prestadorBuscado.getNome() + " CPF: " + prestadorBuscado.getCPF();
+                    Registro novoRegistroServicoExcluir = new Registro("Admin", mensagemRegistro);
+
+                    CompletableFuture.runAsync(() -> {
+                        novoRegistroServicoExcluir.setId(banco.salvarRegistro(novoRegistroServicoExcluir));
+                        banco.removerPrestador(alvo);
+                    }).thenRun(() -> {
+                        Platform.runLater(() -> {
+                            controlador.adicionarRegistro(novoRegistroServicoExcluir);
+                            controlador.getPrestadores().remove(alvo);
+                        });
+                    }).exceptionally(ex -> {
+                        Platform.runLater(() -> {
+                            System.out.println("Erro ao salvar: " + ex.getMessage());
+                        });
+                        return null;
+                    });
+
                     }
                 else return;
                 }
@@ -398,7 +452,25 @@ public class TelaServicos extends CSS{
         btnLiberar.setStyle(btnLiberar.getStyle().replace("#8FC0A9", "#CDCDCD"));
         btnLiberar.setOnAction(e -> {
             p.setHoraEntrada(LocalDateTime.now());
-            banco.salvarEntradaServico(p);
+
+            String mensagemRegistro = "Prestador Nome: " + p.getNome() + " CPF: " + p.getCPF() + " entrada liberada";
+            Registro novoRegistroServicoEntrar = new Registro("Admin", mensagemRegistro);
+
+            CompletableFuture.runAsync(() -> {
+                banco.salvarEntradaServico(p);
+                novoRegistroServicoEntrar.setId(banco.salvarRegistro(novoRegistroServicoEntrar));
+            }).thenRun(() -> {
+                Platform.runLater(() -> {
+                    controlador.adicionarRegistro(novoRegistroServicoEntrar);
+                });
+                
+            }).exceptionally(ex -> {
+                Platform.runLater(() -> {
+                    System.out.println("Erro ao salvar: " + ex.getMessage());
+                });
+                return null;
+            });
+
             exibirFinalizacao("Sucesso", "Prestador autorizado a entrar!");
             trocarSubTela(containerPai, criarGridServicos(containerPai));
         });
@@ -494,13 +566,210 @@ public class TelaServicos extends CSS{
         btnLiberar.setStyle(btnLiberar.getStyle().replace("#8FC0A9", "#CDCDCD"));
         btnLiberar.setOnAction(e -> {
             p.setHoraSaida(LocalDateTime.now());
-            banco.salvarSaidaServico(p);
+
+            String mensagemRegistro = "Prestador Nome: " + p.getNome() + " CPF: " + p.getCPF() + " saída liberada";
+            Registro novoRegistroServicoSair = new Registro("Admin", mensagemRegistro);
+
+            CompletableFuture.runAsync(() -> {
+                banco.salvarSaidaServico(p);
+                novoRegistroServicoSair.setId(banco.salvarRegistro(novoRegistroServicoSair));
+            }).thenRun(() -> {
+                Platform.runLater(() -> {
+                    controlador.adicionarRegistro(novoRegistroServicoSair);
+                });
+                
+            }).exceptionally(ex -> {
+                Platform.runLater(() -> {
+                    System.out.println("Erro ao salvar: " + ex.getMessage());
+                });
+                return null;
+            });
+
             exibirFinalizacao("Sucesso", "Prestador autorizado a sair!");
             trocarSubTela(containerPai, criarGridServicos(containerPai));
         });
 
         linha.getChildren().addAll(lblId, boxDados, boxMoradorV, btnLiberar);
         return linha;
+    }
+
+    public VBox criarTelaBuscarEditarServico(StackPane containerPai) {
+        VBox layout = new VBox(20);
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(300);
+
+        Label lblTitulo = new Label("Editar Serviço");
+        lblTitulo.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 24px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
+
+        javafx.scene.control.TextField txtBusca = new javafx.scene.control.TextField();
+        txtBusca.setPromptText("CPF");
+        estilizarInput(txtBusca);
+        aplicarFiltroNumerico(txtBusca, 11);
+
+        Button btnBuscar = customizarBotaoMenu("Buscar");
+        Button btnVoltar = customizarBotaoMenu("Voltar");
+        btnVoltar.setStyle(btnVoltar.getStyle().replace("#8FC0A9", "#CDCDCD"));
+        btnVoltar.setOnAction(e -> trocarSubTela(containerPai, criarGridServicos(containerPai)));
+        btnBuscar.setOnAction(e -> {
+            PrestadorServico prestadorBuscado = null;
+
+            for(PrestadorServico p : controlador.getPrestadores()){
+                if(p.getCPF().trim().equals(txtBusca.getText())){
+                    prestadorBuscado = p;
+                    break;
+                }
+            }
+
+            if(prestadorBuscado == null){
+                exibirAlerta("ERRO", "Prestador não encontrado");
+            }
+            else{
+                if(exibirConfirmacao("Editar?", prestadorBuscado.toString())){
+                    trocarSubTela(containerPai, criarTelaEditarServicos(containerPai, prestadorBuscado));
+                    }
+                else return;
+                }
+        });
+
+        layout.getChildren().addAll(lblTitulo, txtBusca, btnBuscar, btnVoltar);
+        return layout;
+    }
+
+    private VBox criarTelaEditarServicos(StackPane containerPai, PrestadorServico p) {
+        VBox layout = new VBox(15);
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(400);
+
+        Label lblTitulo = new Label("Novo Serviço");
+        lblTitulo.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 24px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
+
+        javafx.scene.control.TextField txtNome = new javafx.scene.control.TextField();
+        txtNome.setPromptText("Nome Completo");
+        txtNome.setText(p.getNome());
+        estilizarInput(txtNome);
+
+        javafx.scene.control.TextField txtCpf = new javafx.scene.control.TextField();
+        txtCpf.setPromptText("CPF");
+        txtCpf.setText(p.getCPF());
+        estilizarInput(txtCpf);
+        aplicarFiltroNumerico(txtCpf, 11);
+
+        javafx.scene.control.TextField txtTelefone = new javafx.scene.control.TextField();
+        txtTelefone.setPromptText("Telefone");
+        txtTelefone.setText(p.getTel());
+        estilizarInput(txtTelefone);
+        aplicarFiltroNumerico(txtTelefone, 11);
+
+        javafx.scene.control.TextField txtCNH = new javafx.scene.control.TextField();
+        txtCNH.setPromptText("CNH");
+        txtCNH.setText(p.getCnh());
+        estilizarInput(txtCNH);
+        aplicarFiltroNumerico(txtCNH, 11);
+
+        javafx.scene.control.TextField txtTipoServico = new javafx.scene.control.TextField();
+        txtTipoServico.setPromptText("Tipo de Serviço");
+        txtTipoServico.setText(p.getTipoServico());
+        estilizarInput(txtTipoServico);
+
+        javafx.scene.control.TextField txtEndereco = new javafx.scene.control.TextField();
+        txtEndereco.setPromptText("Endereço Morador");
+        txtEndereco.setText(p.getMorador().getEnderecoMorador());
+        estilizarInput(txtEndereco);
+
+        Button btnSalvar = customizarBotaoMenu("Salvar"); 
+        Button btnVoltar = customizarBotaoMenu("Voltar");
+        btnVoltar.setStyle(btnVoltar.getStyle().replace("#8FC0A9", "#CDCDCD")); 
+
+        btnVoltar.setOnAction(e -> trocarSubTela(containerPai, criarGridServicos(containerPai)));
+        btnSalvar.setOnAction(e -> {
+                    // =========================
+                    // LÓGICA EDITAR SERVIÇOS
+                    // ========================= 
+                    boolean cadastroValido = false;
+                    Morador moradorServico = null;
+
+                    String nome = txtNome.getText().trim();
+                    String CPF = txtCpf.getText().trim();
+                    String telefone = txtTelefone.getText().trim();
+                    String cnh = txtCNH.getText().trim();
+                    String tiposervico = txtTipoServico.getText().trim();
+                    String endereco = txtEndereco.getText().trim();
+
+                    if (nome.isEmpty() || CPF.isEmpty() || telefone.isEmpty() || cnh.isEmpty() || tiposervico.isEmpty() || endereco.isEmpty()) {
+                        if(nome.isEmpty()) estilizarInputErro(txtNome);
+                        else estilizarInput(txtNome);
+                        if(CPF.isEmpty()) estilizarInputErro(txtCpf);
+                        else estilizarInput(txtCpf);
+                        if(telefone.isEmpty()) estilizarInputErro(txtTelefone);
+                        else estilizarInput(txtTelefone);
+                        if(cnh.isEmpty()) estilizarInputErro(txtCNH);
+                        else estilizarInput(txtCNH);
+                        if(tiposervico.isEmpty()) estilizarInputErro(txtTipoServico);
+                        else estilizarInput(txtTipoServico);
+                        if(endereco.isEmpty()) estilizarInputErro(txtEndereco);
+                        else estilizarInput(txtEndereco);
+                        return; 
+                    }
+
+                    String mensagem = "Nome: " + nome + 
+                                    "\nCPF: " + CPF + 
+                                    "\nTelefone: " + telefone + 
+                                    "\nCNH: " + cnh +
+                                    "\nTipo de Serviço: " + tiposervico +
+                                    "\nMorador (endereço): " + endereco;
+
+                    if (exibirConfirmacao("Confirmar Edição?", mensagem)) {
+                            for(Morador m : controlador.getMoradores()){
+                                if(m.getEnderecoMorador().trim().equals(endereco)){
+                                    moradorServico = m;
+                                    break;
+                                }
+                            }
+
+                            if(moradorServico != null){
+                                String cpfTempP = p.getCPF();
+                                p.setNome(nome);
+                                p.setCPF(CPF);
+                                p.setTel(telefone);
+                                p.setCnh(cnh);
+                                p.setTipoServico(tiposervico);
+                                p.setMorador(moradorServico);
+                                String cpfTempM = p.getMorador().getCPF();
+                                
+                                String mensagemRegistro = "Prestador Nome: " + p.getNome() + " CPF: " + p.getCPF() + " editado";
+                                Registro novoRegistroServicoEditar = new Registro("Admin", mensagemRegistro);
+                                CompletableFuture.runAsync(() -> {
+                                    banco.editarServico(p, cpfTempP, cpfTempM);
+                                    novoRegistroServicoEditar.setId(banco.salvarRegistro(novoRegistroServicoEditar));
+                                }).thenRun(() -> {
+                                    Platform.runLater(() -> {
+                                        controlador.adicionarRegistro(novoRegistroServicoEditar);
+                                    });
+                                    
+                                }).exceptionally(ex -> {
+                                    Platform.runLater(() -> {
+                                        System.out.println("Erro ao salvar: " + ex.getMessage());
+                                    });
+                                    return null;
+                                });
+                                cadastroValido = true; 
+                            }
+                            else{
+                                exibirAlerta("ERRO", "Morador não encontrado.");
+                                return;
+                            }
+                            
+                        }
+                    else return;
+
+                    if(cadastroValido) {
+                        exibirFinalizacao("Sucesso!", "Edição concluída com sucesso!");
+                        trocarSubTela(containerPai, criarGridServicos(containerPai));
+                    };
+        });
+
+        layout.getChildren().addAll(lblTitulo, txtNome, txtCpf, txtTelefone, txtCNH, txtTipoServico, txtEndereco, btnSalvar, btnVoltar);
+        return layout;
     }
 
 }

@@ -1,5 +1,8 @@
 package model;
 
+import java.util.concurrent.CompletableFuture;
+
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -57,7 +60,7 @@ public class TelaFuncionarios extends CSS{
 
         btnCadastrar.setOnAction(e -> trocarSubTela(containerPai, criarTelaCadastroFuncionario(containerPai)));
         btnListar.setOnAction(e -> trocarSubTela(containerPai, criarTelaListarFuncionarios(containerPai)));
-        btnEditar.setOnAction(e -> trocarSubTela(containerPai, criarTelaBuscaCPFGenerica(containerPai, "Editar Funcionário", () -> criarGridFuncionarios(containerPai))));
+        btnEditar.setOnAction(e -> trocarSubTela(containerPai, criarTelaBuscarEdicaoFuncionario(containerPai)));
         btnExcluir.setOnAction(e -> trocarSubTela(containerPai, criarTelaExcluirFuncionario(containerPai)));
 
         layout.getChildren().addAll(lblTitulo, grid);
@@ -126,8 +129,6 @@ public class TelaFuncionarios extends CSS{
 
                     if (exibirConfirmacao("Confirmar Cadastro?", mensagem)) {
                             novoFuncionario = new Funcionario(nome, CPF, telefone, funcao);
-                            this.controlador.adicionarFuncionario(novoFuncionario);
-                            banco.salvarFuncionario(novoFuncionario);
                             cadastroValido = true; 
                         }
                     else return;
@@ -136,6 +137,24 @@ public class TelaFuncionarios extends CSS{
                         String mensagemFinal = novoFuncionario.toString();
                         exibirFinalizacao("Cadastro Finalizado", mensagemFinal);
                         trocarSubTela(containerPai, criarGridFuncionarios(containerPai));
+
+                        String mensagemRegistro = "Cadastro do Funcionário: " + novoFuncionario.getNome() + " CPF: " + novoFuncionario.getCPF();
+                        Registro novoRegistroFuncionario = new Registro("Admin", mensagemRegistro);
+
+                        CompletableFuture.runAsync(() -> {
+                            novoRegistroFuncionario.setId(banco.salvarRegistro(novoRegistroFuncionario));
+                            banco.salvarFuncionario(novoFuncionario);
+                        }).thenRun(() -> {
+                            Platform.runLater(() -> {
+                                controlador.adicionarRegistro(novoRegistroFuncionario);
+                                this.controlador.adicionarFuncionario(novoFuncionario);
+                            });
+                        }).exceptionally(ex -> {
+                            Platform.runLater(() -> {
+                                System.out.println("Erro ao salvar: " + ex.getMessage());
+                            });
+                            return null;
+                        });
                     };
         });
 
@@ -144,6 +163,23 @@ public class TelaFuncionarios extends CSS{
     }
 
         private VBox criarTelaListarFuncionarios(StackPane containerPai){
+
+        String mensagemRegistro = "Listou todos os funcionários";
+        Registro novoRegistroFuncionarioListar = new Registro("Admin", mensagemRegistro);
+        
+        CompletableFuture.runAsync(() -> {
+            novoRegistroFuncionarioListar.setId(banco.salvarRegistro(novoRegistroFuncionarioListar));
+        }).thenRun(() -> {
+            Platform.runLater(() -> {
+                controlador.adicionarRegistro(novoRegistroFuncionarioListar);
+            });
+        }).exceptionally(ex -> {
+            Platform.runLater(() -> {
+                System.out.println("Erro ao salvar: " + ex.getMessage());
+            });
+            return null;
+        });
+
         VBox layout = new VBox(20);
         layout.setAlignment(Pos.TOP_CENTER);
         layout.setPadding(new Insets(30)); 
@@ -253,17 +289,180 @@ public class TelaFuncionarios extends CSS{
                 exibirAlerta("ERRO", "Funcionário não encontrado");
             }
             else{
-                if(exibirConfirmacao("Excluir?", funcionarioBuscado.toString())){
-                    banco.removerFuncionario(funcionarioBuscado);
-                    controlador.getFuncionarios().remove(funcionarioBuscado);
+                if(exibirConfirmacao("Excluir?", funcionarioBuscado.toString())){                    
                     exibirFinalizacao("Sucesso", "Funcionário excluído!");
                     trocarSubTela(containerPai, criarGridFuncionarios(containerPai));
+
+                    final Funcionario alvo = funcionarioBuscado;
+
+                    String mensagemRegistro = "Excluiu o Funcionário: " + funcionarioBuscado.getNome() + " CPF: " + funcionarioBuscado.getCPF();
+                    Registro novoRegistroFuncionarioExcluir = new Registro("Admin", mensagemRegistro);
+
+                    CompletableFuture.runAsync(() -> {
+                        novoRegistroFuncionarioExcluir.setId(banco.salvarRegistro(novoRegistroFuncionarioExcluir));
+                        banco.removerFuncionario(alvo);
+                    }).thenRun(() -> {
+                        Platform.runLater(() -> {
+                            controlador.adicionarRegistro(novoRegistroFuncionarioExcluir);
+                            controlador.getFuncionarios().remove(alvo);
+                        });
+                    }).exceptionally(ex -> {
+                        Platform.runLater(() -> {
+                            System.out.println("Erro ao salvar: " + ex.getMessage());
+                        });
+                        return null;
+                    });
+
                     }
                 else return;
                 }
         });
 
         layout.getChildren().addAll(lblTitulo, txtBusca, btnBuscar, btnVoltar);
+        return layout;
+    }
+
+    public VBox criarTelaBuscarEdicaoFuncionario(StackPane containerPai) {
+        VBox layout = new VBox(20);
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(300);
+
+        Label lblTitulo = new Label("Editar Funcionário");
+        lblTitulo.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 24px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
+
+        javafx.scene.control.TextField txtBusca = new javafx.scene.control.TextField();
+        txtBusca.setPromptText("CPF");
+        estilizarInput(txtBusca);
+        aplicarFiltroNumerico(txtBusca, 11);
+
+        Button btnBuscar = customizarBotaoMenu("Buscar");
+        Button btnVoltar = customizarBotaoMenu("Voltar");
+        btnVoltar.setStyle(btnVoltar.getStyle().replace("#8FC0A9", "#CDCDCD"));
+        btnVoltar.setOnAction(e -> trocarSubTela(containerPai, criarGridFuncionarios(containerPai)));
+        btnBuscar.setOnAction(e -> {
+            Funcionario funcionarioBuscado = null;
+
+            for(Funcionario f : controlador.getFuncionarios()){
+                if(f.getCPF().trim().equals(txtBusca.getText())){
+                    funcionarioBuscado = f;
+                    break;
+                }
+            }
+
+            if(funcionarioBuscado == null){
+                exibirAlerta("ERRO", "Funcionário não encontrado");
+            }
+            else{
+                if(exibirConfirmacao("Editar?", funcionarioBuscado.toString())){
+                    trocarSubTela(containerPai, criarTelaEditarFuncionario(containerPai, funcionarioBuscado));
+                    }
+                else return;
+                }
+        });
+
+        layout.getChildren().addAll(lblTitulo, txtBusca, btnBuscar, btnVoltar);
+        return layout;
+    }
+
+    private VBox criarTelaEditarFuncionario(StackPane containerPai, Funcionario f) {
+        VBox layout = new VBox(15);
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(400);
+
+        Label lblTitulo = new Label("Editar Funcionário");
+        lblTitulo.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 24px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
+
+        javafx.scene.control.TextField txtNome = new javafx.scene.control.TextField();
+        txtNome.setPromptText("Nome Completo");
+        txtNome.setText(f.getNome());
+        estilizarInput(txtNome);
+
+        javafx.scene.control.TextField txtCpf = new javafx.scene.control.TextField();
+        txtCpf.setPromptText("CPF");
+        txtCpf.setText(f.getCPF());
+        estilizarInput(txtCpf);
+        aplicarFiltroNumerico(txtCpf, 11);
+
+        javafx.scene.control.TextField txtTelefone = new javafx.scene.control.TextField();
+        txtTelefone.setPromptText("Telefone");
+        txtTelefone.setText(f.getTel());
+        estilizarInput(txtTelefone);
+        aplicarFiltroNumerico(txtTelefone, 11);
+
+        javafx.scene.control.TextField txtFuncao = new javafx.scene.control.TextField();
+        txtFuncao.setPromptText("Função");
+        txtFuncao.setText(f.getFuncao());
+        estilizarInput(txtFuncao);
+        
+        Button btnSalvar = customizarBotaoMenu("Salvar"); 
+        Button btnVoltar = customizarBotaoMenu("Voltar");
+        btnVoltar.setStyle(btnVoltar.getStyle().replace("#8FC0A9", "#CDCDCD")); 
+
+        btnVoltar.setOnAction(e -> trocarSubTela(containerPai, criarGridFuncionarios(containerPai)));
+        btnSalvar.setOnAction(e -> {
+                    // =========================
+                    // LÓGICA EDIÇÃO FUNCIONÁRIO
+                    // ========================= 
+                    boolean edicaoValida = false;
+
+                    String nome = txtNome.getText().trim();
+                    String CPF = txtCpf.getText().trim();
+                    String telefone = txtTelefone.getText().trim();
+                    String funcao = txtFuncao.getText().trim();
+
+                    if (nome.isEmpty() || CPF.isEmpty() || telefone.isEmpty() || funcao.isEmpty()) {
+                        if(nome.isEmpty()) estilizarInputErro(txtNome);
+                        else estilizarInput(txtNome);
+                        if(CPF.isEmpty()) estilizarInputErro(txtCpf);
+                        else estilizarInput(txtCpf);
+                        if(telefone.isEmpty()) estilizarInputErro(txtTelefone);
+                        else estilizarInput(txtTelefone);
+                        if(funcao.isEmpty()) estilizarInputErro(txtFuncao);
+                        else estilizarInput(txtFuncao);
+                        return; 
+                    }
+
+                    String mensagem = "Nome: " + nome + 
+                                    "\nCPF: " + CPF + 
+                                    "\nTelefone: " + telefone + 
+                                    "\nFunção: " + funcao;
+
+                    if (exibirConfirmacao("Confirmar Edição?", mensagem)) {
+                            f.setNome(nome);
+                            String cpfTemp = f.getCPF();
+                            f.setCPF(CPF);
+                            f.setTel(telefone);
+                            f.setFuncao(funcao);
+
+                            String mensagemRegistro = "Funcionário Nome: " + f.getNome() + " CPF: " + f.getCPF() + " editado";
+                            Registro novoRegistroFuncionarioEditar = new Registro("Admin", mensagemRegistro);
+                            CompletableFuture.runAsync(() -> {
+                                banco.editarFuncionario(f, cpfTemp);
+                                novoRegistroFuncionarioEditar.setId(banco.salvarRegistro(novoRegistroFuncionarioEditar));
+                            }).thenRun(() -> {
+                                Platform.runLater(() -> {
+                                    controlador.adicionarRegistro(novoRegistroFuncionarioEditar);
+                                });
+                                
+                            }).exceptionally(ex -> {
+                                Platform.runLater(() -> {
+                                    System.out.println("Erro ao salvar: " + ex.getMessage());
+                                });
+                                return null;
+                            });
+
+                            edicaoValida = true; 
+                        }
+                    else return;
+
+                    if(edicaoValida) {
+                        String mensagemFinal = f.toString();
+                        exibirFinalizacao("Edição Finalizada", mensagemFinal);
+                        trocarSubTela(containerPai, criarGridFuncionarios(containerPai));
+                    };
+        });
+
+        layout.getChildren().addAll(lblTitulo, txtNome, txtCpf, txtTelefone, txtFuncao, btnSalvar, btnVoltar);
         return layout;
     }
 

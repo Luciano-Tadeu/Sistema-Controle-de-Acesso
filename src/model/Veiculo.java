@@ -9,11 +9,8 @@ public class Veiculo {
         this.cor = cor;
     }
 
-    public void exibirDadosVeiculo(){
-        System.out.println("---Dados do Veículo---");
-        System.out.println("Placa: " + getPlaca());
-        System.out.println("Modelo: " + getModelo());
-        System.out.println("Cor: " + getCor());
+    public String exibirDadosVeiculo(){
+        return "\nPlaca: " + this.placa + "\nModelo: " + this.modelo + "\nCor: " + this.cor;
     }
 
     @Override

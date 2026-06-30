@@ -17,6 +17,7 @@ import model.Controlador;
 import model.GerenciadorBancoDeDados;
 import model.TelaFuncionarios;
 import model.TelaMorador;
+import model.TelaRegistros;
 import model.TelaServicos;
 import model.TelaVisitas;
 
@@ -28,6 +29,7 @@ public class App extends Application {
     private static TelaFuncionarios telaFuncionario = new TelaFuncionarios(controlador, banco);
     private static TelaVisitas telaVisita = new TelaVisitas(controlador, banco);
     private static TelaServicos telaServico = new TelaServicos(controlador, banco);
+    private static TelaRegistros telaRegistros = new TelaRegistros(controlador, banco);
 
     private StackPane cartaoBrancoConteudo;
     
@@ -86,19 +88,15 @@ public class App extends Application {
 
         areaDireita.getChildren().add(cartaoBrancoConteudo);
 
-        // ==========================================
-        // TELAS TEMPORÁRIAS 
-        // ==========================================
-        StackPane telaRegistros = criarTelaTemporaria("Conteúdo da Tabela de Registros");
 
-        btnRegistros.setOnAction(e -> trocarTela(telaRegistros, btnRegistros));
+        btnRegistros.setOnAction(e -> trocarTela(telaRegistros.criarTelaListarRegistros(), btnRegistros));
         btnMoradores.setOnAction(e -> trocarTela(telaMorador.construirModuloMoradores(), btnMoradores));
         btnVisitas.setOnAction(e -> trocarTela(telaVisita.construirModuloVisitas(), btnVisitas));
         btnFuncionarios.setOnAction(e -> trocarTela(telaFuncionario.construirModuloFuncionarios(), btnFuncionarios));
         btnServicos.setOnAction(e -> trocarTela(telaServico.construirModuloServicos(), btnServicos));
         btnSair.setOnAction(e -> {javafx.application.Platform.exit();});
 
-        trocarTela(telaRegistros, btnRegistros);
+        trocarTela(telaRegistros.criarTelaListarRegistros(), btnRegistros);
 
         // ==========================================
         // MONTAGEM FINAL
@@ -171,15 +169,6 @@ public class App extends Application {
 
         botaoMenuAtivo = botaoClicado;
         botaoMenuAtivo.setStyle(ESTILO_SELECTED);
-    }
-
-
-    private StackPane criarTelaTemporaria(String titulo) {
-        StackPane painel = new StackPane();
-        Label texto = new Label(titulo);
-        texto.setStyle("-fx-font-family: 'Poppins'; -fx-font-size: 28px; -fx-text-fill: #4A7C59; -fx-font-weight: bold;");
-        painel.getChildren().add(texto);
-        return painel;
     }
 
     public static void main(String[] args) {

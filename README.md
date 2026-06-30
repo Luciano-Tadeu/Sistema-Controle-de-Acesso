@@ -90,4 +90,12 @@ CREATE TABLE prestadores (
     morador_id INT NOT NULL,
     CONSTRAINT prestadores_ibfk_1 FOREIGN KEY (morador_id) REFERENCES moradores(id) ON DELETE CASCADE
 );
+
+-- 6. Tabela de Registros
+CREATE TABLE registros(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario varchar(50),
+    mensagem varchar(250),
+    dataregistro varchar(50)
+);
 ```
