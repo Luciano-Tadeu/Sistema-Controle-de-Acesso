@@ -1,2 +1,0 @@
-@echo off
-start "" "C:\Program Files\Eclipse Adoptium\jdk-25.0.2.10-hotspot\bin\java.exe" --module-path "C:\java\javafx-sdk-26.0.1\lib" --add-modules javafx.controls,javafx.fxml -jar Sistema-Controle-de-Acesso.jar
